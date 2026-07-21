@@ -23,9 +23,9 @@ class ManageStoreSettings extends Page
 
     protected static ?string $navigationLabel = 'Store Settings';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Settings';
+    protected static string | \UnitEnum | null $navigationGroup = 'Management';
 
-    protected static ?int $navigationSort = 100;
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'store-settings';
 

@@ -16,11 +16,17 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
+use UnitEnum;
+
 class DeliveryAreaResource extends Resource
 {
     protected static ?string $model = DeliveryArea::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Operations';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {
@@ -48,9 +54,6 @@ class DeliveryAreaResource extends Resource
     {
         return [
             'index' => ListDeliveryAreas::route('/'),
-            'create' => CreateDeliveryArea::route('/create'),
-            'view' => ViewDeliveryArea::route('/{record}'),
-            'edit' => EditDeliveryArea::route('/{record}/edit'),
         ];
     }
 }

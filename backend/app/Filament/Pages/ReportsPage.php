@@ -19,9 +19,9 @@ class ReportsPage extends Page
 
     protected static ?string $navigationLabel = 'Reports';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected static string | \UnitEnum | null $navigationGroup = 'Management';
 
-    protected static ?int $navigationSort = 200;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'reports';
 

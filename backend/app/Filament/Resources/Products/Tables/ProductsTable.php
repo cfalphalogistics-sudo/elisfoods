@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -61,19 +61,18 @@ class ProductsTable
             ->filters([
                 SelectFilter::make('type')
                     ->options([
-                        'fried' => 'Fried',
+                        'prepared' => 'Prepared',
                         'marinated' => 'Marinated',
                         'frozen' => 'Frozen',
-                        'side' => 'Side',
-                        'drink' => 'Drink',
                         'combo' => 'Combo',
                     ]),
             ])
-            ->recordActions([
+            ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()
+                    ->slideOver(),
             ])
-            ->toolbarActions([
+            ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

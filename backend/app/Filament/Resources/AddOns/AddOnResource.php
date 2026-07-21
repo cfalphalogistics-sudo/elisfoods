@@ -17,11 +17,17 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
+use UnitEnum;
+
 class AddOnResource extends Resource
 {
     protected static ?string $model = AddOn::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPlusCircle;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Catalog';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {
@@ -54,9 +60,6 @@ class AddOnResource extends Resource
     {
         return [
             'index' => ListAddOns::route('/'),
-            'create' => CreateAddOn::route('/create'),
-            'view' => ViewAddOn::route('/{record}'),
-            'edit' => EditAddOn::route('/{record}/edit'),
         ];
     }
 }

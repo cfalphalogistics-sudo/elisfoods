@@ -14,11 +14,17 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
+use UnitEnum;
+
 class VariationResource extends Resource
 {
     protected static ?string $model = Variation::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquare2Stack;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Catalog';
+
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {
@@ -41,8 +47,6 @@ class VariationResource extends Resource
     {
         return [
             'index' => ListVariations::route('/'),
-            'create' => CreateVariation::route('/create'),
-            'edit' => EditVariation::route('/{record}/edit'),
         ];
     }
 }
