@@ -341,6 +341,7 @@ export const storeSettings = {
   isOpen: true,
   packagingFee: 5,
   paymentMethods: ["hubtel", "cash", "whatsapp"],
+  pickupLocation: "Eli's Food Kitchen, Accra",
 };
 
 export function isStoreOpen(now = new Date()): boolean {

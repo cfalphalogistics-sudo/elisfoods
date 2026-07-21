@@ -21,6 +21,7 @@ interface ApiStoreSettings {
   packagingFee: number;
   isOpen: boolean;
   paymentMethods?: unknown;
+  pickupLocation?: string;
 }
 
 function normalizeStoreSettings(s: ApiStoreSettings) {
@@ -34,6 +35,7 @@ function normalizeStoreSettings(s: ApiStoreSettings) {
     hours_close: s.hours.close,
     is_open: s.isOpen,
     payment_methods: methods.length ? methods : ["hubtel", "cash", "whatsapp"],
+    pickup_location: s.pickupLocation ?? "Eli's Food Kitchen, Accra",
   };
 }
 
@@ -45,6 +47,7 @@ const fallbackStoreSettings = {
   hours_close: staticSettings.hours.close,
   is_open: staticSettings.isOpen,
   payment_methods: asArray<string>(staticSettings.paymentMethods),
+  pickup_location: staticSettings.pickupLocation ?? "Eli's Food Kitchen, Accra",
 };
 
 export async function fetchStoreSettings() {

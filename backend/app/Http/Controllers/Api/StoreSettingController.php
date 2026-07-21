@@ -26,6 +26,7 @@ class StoreSettingController extends Controller
             'packagingFee' => (int) StoreSetting::get('packaging_fee', 0),
             'isOpen' => filter_var(StoreSetting::get('is_open', 'true'), FILTER_VALIDATE_BOOLEAN),
             'paymentMethods' => StoreSetting::paymentMethods(),
+            'pickupLocation' => StoreSetting::get('pickup_location', "Eli's Food Kitchen, Accra"),
         ];
 
         return response()->json($settings);

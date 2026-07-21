@@ -23,6 +23,7 @@ interface StoreSetting {
   hours_close: string;
   is_open: boolean;
   payment_methods: string[];
+  pickup_location: string;
 }
 
 function CheckoutContent() {
@@ -200,7 +201,7 @@ function CheckoutContent() {
             {customer.method === "pickup" && (
               <div className="p-4 bg-tertiary/10 text-tertiary rounded-2xl">
                 <p className="font-label-bold">Pickup Location</p>
-                <p className="text-body-md">Eli&apos;s Food Kitchen, Accra</p>
+                <p className="text-body-md">{storeSettings?.pickup_location ?? "Eli's Food Kitchen, Accra"}</p>
                 {storeSettings && <p className="text-label-sm">Opening hours: {storeSettings.hours_open} — {storeSettings.hours_close}</p>}
               </div>
             )}

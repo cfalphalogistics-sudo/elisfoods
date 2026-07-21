@@ -52,6 +52,7 @@ class ManageStoreSettings extends Page
             'packaging_fee' => ((int) StoreSetting::get('packaging_fee', 0)) / 100,
             'is_open' => filter_var(StoreSetting::get('is_open', 'true'), FILTER_VALIDATE_BOOLEAN),
             'payment_methods' => json_decode(StoreSetting::get('payment_methods', '[]'), true) ?: ['hubtel', 'cash', 'whatsapp'],
+            'pickup_location' => StoreSetting::get('pickup_location', "Eli's Food Kitchen, Accra"),
         ]);
     }
 
@@ -126,6 +127,14 @@ class ManageStoreSettings extends Page
                             ->default(['hubtel', 'cash', 'whatsapp'])
                             ->required()
                             ->columns(3),
+                    ]),
+
+                Section::make('Pickup location')
+                    ->schema([
+                        \Filament\Forms\Components\TextInput::make('pickup_location')
+                            ->label('Pickup address / location')
+                            ->placeholder("Eli's Food Kitchen, Accra")
+                            ->required(),
                     ]),
             ]);
     }
