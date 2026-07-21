@@ -30,47 +30,29 @@ class RecentOrdersWidget extends TableWidget
                     ->limit(5)
             )
             ->columns([
-                Stack::make([
-                    Split::make([
-                        Stack::make([
-                            TextColumn::make('customer_name')
-                                ->weight(FontWeight::Bold)
-                                ->searchable(),
-                            TextColumn::make('reference')
-                                ->color('primary')
-                                ->weight(FontWeight::Bold),
-                        ]),
-                        TextColumn::make('status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'placed' => 'gray',
-                                'confirmed' => 'info',
-                                'preparing' => 'warning',
-                                'out-for-delivery' => 'primary',
-                                'delivered' => 'success',
-                                'cancelled' => 'danger',
-                                default => 'gray',
-                            })
-                            ->grow(false),
-                    ]),
-                    Split::make([
-                        Stack::make([
-                            TextColumn::make('total_label')
-                                ->default('Order Amount')
-                                ->color('gray'),
-                            TextColumn::make('total')
-                                ->money('GHS', 100)
-                                ->weight(FontWeight::Bold),
-                        ]),
-                        Stack::make([
-                            TextColumn::make('placed_label')
-                                ->default('Placed')
-                                ->color('gray'),
-                            TextColumn::make('created_at')
-                                ->since(),
-                        ]),
-                    ]),
-                ])->space(3),
+                TextColumn::make('reference')
+                    ->color('primary')
+                    ->weight(FontWeight::Bold)
+                    ->searchable(),
+                TextColumn::make('customer_name')
+                    ->label('Customer')
+                    ->weight(FontWeight::Bold),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'placed' => 'gray',
+                        'confirmed' => 'info',
+                        'preparing' => 'warning',
+                        'out-for-delivery' => 'primary',
+                        'delivered' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+                TextColumn::make('total')
+                    ->money('GHS', 100),
+                TextColumn::make('created_at')
+                    ->label('Placed')
+                    ->since(),
             ])
             ->actions([
                 \Filament\Actions\Action::make('markPreparing')
@@ -95,10 +77,6 @@ class RecentOrdersWidget extends TableWidget
                     ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),
             ])
-            ->contentGrid([
-                'default' => 1,
-                'md' => 2,
-                'xl' => 3,
-            ]);
+            ->stackedOnMobile();
     }
 }

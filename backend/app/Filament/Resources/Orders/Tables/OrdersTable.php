@@ -25,64 +25,51 @@ class OrdersTable
     {
         return $table
             ->columns([
-                Stack::make([
-                    Split::make([
-                        Stack::make([
-                            TextColumn::make('customer_name')
-                                ->weight(FontWeight::Bold)
-                                ->searchable(),
-                            TextColumn::make('phone')
-                                ->color('gray')
-                                ->searchable(),
-                        ]),
-                        TextColumn::make('reference')
-                            ->color('primary')
-                            ->weight(FontWeight::Bold)
-                            ->searchable(),
-                        SelectColumn::make('status')
-                            ->options([
-                                'placed' => 'Placed',
-                                'confirmed' => 'Confirmed',
-                                'preparing' => 'Preparing',
-                                'out-for-delivery' => 'Out for delivery',
-                                'delivered' => 'Delivered',
-                                'cancelled' => 'Cancelled',
-                            ])
-                            ->selectablePlaceholder(false)
-                            ->grow(false),
-                    ]),
-                    Split::make([
-                        Stack::make([
-                            TextColumn::make('total_label')
-                                ->default('Total Order')
-                                ->color('gray'),
-                            TextColumn::make('total')
-                                ->money('GHS', 100)
-                                ->weight(FontWeight::Bold),
-                        ]),
-                        Stack::make([
-                            TextColumn::make('method')
-                                ->badge()
-                                ->color(fn (string $state): string => match ($state) {
-                                    'delivery' => 'info',
-                                    'pickup' => 'success',
-                                    default => 'gray',
-                                })
-                                ->grow(false),
-                        ]),
-                        Stack::make([
-                            TextColumn::make('payment_method')
-                                ->badge()
-                                ->color(fn (string $state): string => match ($state) {
-                                    'hubtel' => 'primary',
-                                    'cash' => 'success',
-                                    'whatsapp' => 'warning',
-                                    default => 'gray',
-                                })
-                                ->grow(false),
-                        ]),
-                    ]),
-                ])->space(3),
+                TextColumn::make('reference')
+                    ->color('primary')
+                    ->weight(FontWeight::Bold)
+                    ->searchable(),
+                TextColumn::make('customer_name')
+                    ->weight(FontWeight::Bold)
+                    ->searchable(),
+                TextColumn::make('phone')
+                    ->searchable(),
+                TextColumn::make('deliveryArea.name')
+                    ->label('Area')
+                    ->searchable(),
+                TextColumn::make('method')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'delivery' => 'info',
+                        'pickup' => 'success',
+                        default => 'gray',
+                    }),
+                TextColumn::make('payment_method')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'hubtel' => 'primary',
+                        'cash' => 'success',
+                        'whatsapp' => 'warning',
+                        default => 'gray',
+                    }),
+                SelectColumn::make('status')
+                    ->options([
+                        'placed' => 'Placed',
+                        'confirmed' => 'Confirmed',
+                        'preparing' => 'Preparing',
+                        'out-for-delivery' => 'Out for delivery',
+                        'delivered' => 'Delivered',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->selectablePlaceholder(false),
+                TextColumn::make('total')
+                    ->money('GHS', 100)
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->label('Placed at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('date')
@@ -156,10 +143,6 @@ class OrdersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->contentGrid([
-                'default' => 1,
-                'md' => 2,
-                'xl' => 3,
-            ]);
+            ->stackedOnMobile();
     }
 }
