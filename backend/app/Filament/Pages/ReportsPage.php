@@ -51,10 +51,10 @@ class ReportsPage extends Page
             default => 'All Time',
         };
 
-        return "Analytics & Sales Reports ({$label})";
+        return "Reports · {$label}";
     }
 
-    public function getWidgets(): array
+    public function getFooterWidgets(): array
     {
         return [
             ReportRevenueChart::class,
@@ -62,6 +62,11 @@ class ReportsPage extends Page
             ReportStatusChart::class,
             ReportPaymentMethodChart::class,
         ];
+    }
+
+    public function getFooterWidgetsColumns(): int | array
+    {
+        return 2;
     }
 
     protected function getHeaderActions(): array
@@ -193,10 +198,11 @@ class ReportsPage extends Page
             });
 
         $stat = function (string $label, string $value, string $subtext = ''): string {
-            $subtextHtml = $subtext ? '<div class="text-xs text-gray-400 mt-1">' . $subtext . '</div>' : '';
-            return '<div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">' .
-                '<div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . $label . '</div>' .
-                '<div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">' . $value . '</div>' .
+            $subtextHtml = $subtext ? '<div class="text-xs text-gray-400 dark:text-gray-500 mt-1.5">' . $subtext . '</div>' : '';
+            return '<div class="relative overflow-hidden p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10">' .
+                '<div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500"></div>' .
+                '<div class="text-[0.68rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">' . $label . '</div>' .
+                '<div class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white mt-1.5">' . $value . '</div>' .
                 $subtextHtml .
                 '</div>';
         };

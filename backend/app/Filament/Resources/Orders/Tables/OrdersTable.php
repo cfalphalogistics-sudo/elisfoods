@@ -28,24 +28,40 @@ class OrdersTable
                 TextColumn::make('reference')
                     ->color('primary')
                     ->weight(FontWeight::Bold)
+                    ->copyable()
+                    ->copyMessage('Reference copied')
+                    ->description(fn (Order $record): string => $record->created_at->diffForHumans())
                     ->searchable(),
                 TextColumn::make('customer_name')
-                    ->weight(FontWeight::Bold)
-                    ->searchable(),
-                TextColumn::make('phone')
-                    ->searchable(),
+                    ->label('Customer')
+                    ->weight(FontWeight::SemiBold)
+                    ->description(fn (Order $record): ?string => $record->phone)
+                    ->searchable(['customer_name', 'phone']),
                 TextColumn::make('deliveryArea.name')
                     ->label('Area')
+                    ->placeholder('—')
                     ->searchable(),
                 TextColumn::make('method')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'delivery' => 'heroicon-m-truck',
+                        'pickup' => 'heroicon-m-building-storefront',
+                        default => 'heroicon-m-shopping-bag',
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'delivery' => 'info',
                         'pickup' => 'success',
                         default => 'gray',
                     }),
                 TextColumn::make('payment_method')
+                    ->label('Payment')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'hubtel' => 'heroicon-m-device-phone-mobile',
+                        'cash' => 'heroicon-m-banknotes',
+                        'whatsapp' => 'heroicon-m-chat-bubble-left-right',
+                        default => 'heroicon-m-credit-card',
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'hubtel' => 'primary',
                         'cash' => 'success',
@@ -64,13 +80,16 @@ class OrdersTable
                     ->selectablePlaceholder(false),
                 TextColumn::make('total')
                     ->money('GHS', 100)
+                    ->weight(FontWeight::Bold)
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Placed at')
-                    ->dateTime()
+                    ->dateTime('D, M j · g:i A')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
+            ->poll('30s')
             ->filters([
                 Filter::make('date')
                     ->form([
@@ -95,15 +114,6 @@ class OrdersTable
                             default => $query,
                         };
                     }),
-                SelectFilter::make('status')
-                    ->options([
-                        'placed' => 'Placed',
-                        'confirmed' => 'Confirmed',
-                        'preparing' => 'Preparing',
-                        'out-for-delivery' => 'Out for delivery',
-                        'delivered' => 'Delivered',
-                        'cancelled' => 'Cancelled',
-                    ]),
                 SelectFilter::make('payment_method')
                     ->options([
                         'hubtel' => 'Hubtel',
@@ -143,6 +153,9 @@ class OrdersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->emptyStateIcon('heroicon-o-shopping-bag')
+            ->emptyStateHeading('No orders here yet')
+            ->emptyStateDescription('New orders from the website will appear here the moment they are placed.')
             ->stackedOnMobile();
     }
 }

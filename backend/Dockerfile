@@ -1,3 +1,21 @@
+# Stage 1: PHP dependencies (vendor/ is needed by the Vite theme build below)
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --ignore-platform-reqs
+
+# Stage 2: Frontend assets (Filament admin theme via Vite/Tailwind)
+FROM node:22-alpine AS assets
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY vite.config.js ./
+COPY resources ./resources
+COPY app ./app
+COPY --from=vendor /app/vendor ./vendor
+RUN npm run build
+
+# Stage 3: Application image
 FROM php:8.4-apache
 
 # Install dependencies and PHP extensions
@@ -33,6 +51,9 @@ WORKDIR /var/www/html
 
 # Copy application
 COPY . .
+
+# Compiled Vite assets from the build stage (public/build is gitignored)
+COPY --from=assets /app/public/build ./public/build
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --no-interaction
