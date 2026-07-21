@@ -2,13 +2,16 @@
 
 namespace App\Filament\Resources\Orders\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Models\Order;
 
 class OrdersTable
 {
@@ -40,17 +43,16 @@ class OrdersTable
                         'whatsapp' => 'warning',
                         default => 'gray',
                     }),
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'placed' => 'gray',
-                        'confirmed' => 'info',
-                        'preparing' => 'warning',
-                        'out-for-delivery' => 'primary',
-                        'delivered' => 'success',
-                        'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
+                SelectColumn::make('status')
+                    ->options([
+                        'placed' => 'Placed',
+                        'confirmed' => 'Confirmed',
+                        'preparing' => 'Preparing',
+                        'out-for-delivery' => 'Out for delivery',
+                        'delivered' => 'Delivered',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->selectablePlaceholder(false),
                 TextColumn::make('total')
                     ->money('GHS', 100)
                     ->sortable(),
@@ -91,6 +93,24 @@ class OrdersTable
             ])
             ->actions([
                 ViewAction::make(),
+                Action::make('markPreparing')
+                    ->label('Prepare')
+                    ->icon('heroicon-o-fire')
+                    ->color('warning')
+                    ->visible(fn (Order $record): bool => in_array($record->status, ['placed', 'confirmed']))
+                    ->action(fn (Order $record) => $record->update(['status' => 'preparing'])),
+                Action::make('markDispatched')
+                    ->label('Dispatch')
+                    ->icon('heroicon-o-truck')
+                    ->color('primary')
+                    ->visible(fn (Order $record): bool => $record->status === 'preparing')
+                    ->action(fn (Order $record) => $record->update(['status' => 'out-for-delivery'])),
+                Action::make('markDelivered')
+                    ->label('Complete')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Order $record): bool => in_array($record->status, ['preparing', 'out-for-delivery']))
+                    ->action(fn (Order $record) => $record->update(['status' => 'delivered'])),
                 EditAction::make(),
             ])
             ->bulkActions([

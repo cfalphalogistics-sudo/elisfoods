@@ -51,6 +51,24 @@ class RecentOrdersWidget extends TableWidget
                     ->since(),
             ])
             ->actions([
+                \Filament\Actions\Action::make('markPreparing')
+                    ->label('Prepare')
+                    ->icon('heroicon-o-fire')
+                    ->color('warning')
+                    ->visible(fn (Order $record): bool => in_array($record->status, ['placed', 'confirmed']))
+                    ->action(fn (Order $record) => $record->update(['status' => 'preparing'])),
+                \Filament\Actions\Action::make('markDispatched')
+                    ->label('Dispatch')
+                    ->icon('heroicon-o-truck')
+                    ->color('primary')
+                    ->visible(fn (Order $record): bool => $record->status === 'preparing')
+                    ->action(fn (Order $record) => $record->update(['status' => 'out-for-delivery'])),
+                \Filament\Actions\Action::make('markDelivered')
+                    ->label('Complete')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Order $record): bool => in_array($record->status, ['preparing', 'out-for-delivery']))
+                    ->action(fn (Order $record) => $record->update(['status' => 'delivered'])),
                 \Filament\Actions\Action::make('view')
                     ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),
