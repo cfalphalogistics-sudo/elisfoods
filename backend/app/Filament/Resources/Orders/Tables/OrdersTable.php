@@ -8,6 +8,9 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -22,55 +25,64 @@ class OrdersTable
     {
         return $table
             ->columns([
-                TextColumn::make('reference')
-                    ->searchable(),
-                TextColumn::make('customer_name')
-                    ->searchable(),
-                TextColumn::make('phone')
-                    ->searchable(),
-                TextColumn::make('deliveryArea.name')
-                    ->label('Area')
-                    ->searchable(),
-                TextColumn::make('method')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'delivery' => 'info',
-                        'pickup' => 'success',
-                        default => 'gray',
-                    }),
-                TextColumn::make('payment_method')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'hubtel' => 'primary',
-                        'cash' => 'success',
-                        'whatsapp' => 'warning',
-                        default => 'gray',
-                    }),
-                SelectColumn::make('status')
-                    ->options([
-                        'placed' => 'Placed',
-                        'confirmed' => 'Confirmed',
-                        'preparing' => 'Preparing',
-                        'out-for-delivery' => 'Out for delivery',
-                        'delivered' => 'Delivered',
-                        'cancelled' => 'Cancelled',
-                    ])
-                    ->selectablePlaceholder(false),
-                TextColumn::make('total')
-                    ->money('GHS', 100)
-                    ->sortable(),
-                TextColumn::make('paid_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Stack::make([
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('customer_name')
+                                ->weight(FontWeight::Bold)
+                                ->searchable(),
+                            TextColumn::make('phone')
+                                ->color('gray')
+                                ->searchable(),
+                        ]),
+                        TextColumn::make('reference')
+                            ->color('primary')
+                            ->weight(FontWeight::Bold)
+                            ->searchable(),
+                        SelectColumn::make('status')
+                            ->options([
+                                'placed' => 'Placed',
+                                'confirmed' => 'Confirmed',
+                                'preparing' => 'Preparing',
+                                'out-for-delivery' => 'Out for delivery',
+                                'delivered' => 'Delivered',
+                                'cancelled' => 'Cancelled',
+                            ])
+                            ->selectablePlaceholder(false)
+                            ->grow(false),
+                    ]),
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('total_label')
+                                ->default('Total Order')
+                                ->color('gray'),
+                            TextColumn::make('total')
+                                ->money('GHS', 100)
+                                ->weight(FontWeight::Bold),
+                        ]),
+                        Stack::make([
+                            TextColumn::make('method')
+                                ->badge()
+                                ->color(fn (string $state): string => match ($state) {
+                                    'delivery' => 'info',
+                                    'pickup' => 'success',
+                                    default => 'gray',
+                                })
+                                ->grow(false),
+                        ]),
+                        Stack::make([
+                            TextColumn::make('payment_method')
+                                ->badge()
+                                ->color(fn (string $state): string => match ($state) {
+                                    'hubtel' => 'primary',
+                                    'cash' => 'success',
+                                    'whatsapp' => 'warning',
+                                    default => 'gray',
+                                })
+                                ->grow(false),
+                        ]),
+                    ]),
+                ])->space(3),
             ])
             ->filters([
                 Filter::make('date')
@@ -144,7 +156,6 @@ class OrdersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->stackedOnMobile()
             ->contentGrid([
                 'default' => 1,
                 'md' => 2,

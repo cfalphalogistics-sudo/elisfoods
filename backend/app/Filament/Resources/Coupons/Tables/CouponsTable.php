@@ -3,10 +3,13 @@
 namespace App\Filament\Resources\Coupons\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -16,35 +19,40 @@ class CouponsTable
     {
         return $table
             ->columns([
-                TextColumn::make('code')
-                    ->searchable(),
-                TextColumn::make('type')
-                    ->searchable(),
-                TextColumn::make('value')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('min_order')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('usage_limit')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('usage_count')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('expires_at')
-                    ->dateTime()
-                    ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Stack::make([
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('code')
+                                ->weight(FontWeight::Bold)
+                                ->color('primary')
+                                ->searchable(),
+                            TextColumn::make('type')
+                                ->badge()
+                                ->color('info'),
+                        ]),
+                        TextColumn::make('is_active')
+                            ->badge()
+                            ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
+                            ->color(fn (bool $state): string => $state ? 'success' : 'danger')
+                            ->grow(false),
+                    ]),
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('value_label')
+                                ->default('Discount Value')
+                                ->color('gray'),
+                            TextColumn::make('value')
+                                ->weight(FontWeight::Bold),
+                        ]),
+                        Stack::make([
+                            TextColumn::make('usage_label')
+                                ->default('Used / Limit')
+                                ->color('gray'),
+                            TextColumn::make('usage_count')
+                                ->weight(FontWeight::Bold),
+                        ]),
+                    ]),
+                ])->space(3),
             ])
             ->filters([
                 //
@@ -52,13 +60,13 @@ class CouponsTable
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->stackedOnMobile()
             ->contentGrid([
                 'default' => 1,
                 'md' => 2,
