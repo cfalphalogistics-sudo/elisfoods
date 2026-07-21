@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Frozen', 'slug' => 'frozen', 'icon' => 'ac_unit', 'sort_order' => 12],
         ];
         foreach ($categories as $category) {
-            Category::create($category);
+            Category::firstOrCreate(['slug' => $category['slug']], $category);
         }
 
         $addOns = [
@@ -67,7 +67,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Juice', 'slug' => 'juice', 'category' => 'drink', 'price' => 1500],
         ];
         foreach ($addOns as $addOn) {
-            AddOn::create($addOn);
+            AddOn::firstOrCreate(['slug' => $addOn['slug']], $addOn);
         }
 
         $deliveryAreas = [
@@ -80,25 +80,29 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Osu', 'slug' => 'osu', 'fee' => 2500, 'min_order' => 5000],
         ];
         foreach ($deliveryAreas as $area) {
-            DeliveryArea::create($area);
+            DeliveryArea::firstOrCreate(['slug' => $area['slug']], $area);
         }
 
-        Coupon::create([
-            'code' => 'ELI10',
-            'type' => 'percent',
-            'value' => 10,
-            'min_order' => 5000,
-            'usage_limit' => 100,
-            'expires_at' => now()->addMonths(3),
-        ]);
-        Coupon::create([
-            'code' => 'FREEDEL',
-            'type' => 'free_delivery',
-            'value' => 0,
-            'min_order' => 8000,
-            'usage_limit' => 50,
-            'expires_at' => now()->addMonths(1),
-        ]);
+        Coupon::firstOrCreate(
+            ['code' => 'ELI10'],
+            [
+                'type' => 'percent',
+                'value' => 10,
+                'min_order' => 5000,
+                'usage_limit' => 100,
+                'expires_at' => now()->addMonths(3),
+            ]
+        );
+        Coupon::firstOrCreate(
+            ['code' => 'FREEDEL'],
+            [
+                'type' => 'free_delivery',
+                'value' => 0,
+                'min_order' => 8000,
+                'usage_limit' => 50,
+                'expires_at' => now()->addMonths(1),
+            ]
+        );
 
         $settings = [
             'phone' => '0249875848',
@@ -293,7 +297,7 @@ class DatabaseSeeder extends Seeder
             unset($data['category_slug']);
 
             $data['category_id'] = $categoryMap[$categorySlug] ?? null;
-            $product = Product::create($data);
+            $product = Product::firstOrCreate(['slug' => $data['slug']], $data);
 
             if (! empty($addOnSlugs)) {
                 $product->addOns()->sync(
