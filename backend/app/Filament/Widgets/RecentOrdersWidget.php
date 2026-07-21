@@ -51,7 +51,7 @@ class RecentOrdersWidget extends TableWidget
                     ->since(),
             ])
             ->actions([
-                \Filament\Tables\Actions\Action::make('view')
+                \Filament\Actions\Action::make('view')
                     ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),
             ]);
