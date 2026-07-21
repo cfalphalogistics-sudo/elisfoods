@@ -73,6 +73,7 @@ class RecentOrdersWidget extends TableWidget
                     ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),
             ])
+            ->stackedOnMobile()
             ->contentGrid([
                 'default' => 1,
                 'md' => 2,

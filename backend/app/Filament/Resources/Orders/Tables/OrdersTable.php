@@ -7,10 +7,13 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use App\Models\Order;
 
 class OrdersTable
@@ -70,6 +73,29 @@ class OrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Filter::make('date')
+                    ->form([
+                        Select::make('preset')
+                            ->label('Date Range')
+                            ->options([
+                                'today' => 'Today (Default)',
+                                'yesterday' => 'Yesterday',
+                                'this_week' => 'This Week',
+                                'this_month' => 'This Month',
+                                'all' => 'All Time',
+                            ])
+                            ->default('today'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $preset = $data['preset'] ?? 'today';
+                        return match ($preset) {
+                            'today' => $query->whereDate('created_at', now()->toDateString()),
+                            'yesterday' => $query->whereDate('created_at', now()->subDay()->toDateString()),
+                            'this_week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+                            'this_month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+                            default => $query,
+                        };
+                    }),
                 SelectFilter::make('status')
                     ->options([
                         'placed' => 'Placed',
@@ -118,6 +144,7 @@ class OrdersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->stackedOnMobile()
             ->contentGrid([
                 'default' => 1,
                 'md' => 2,

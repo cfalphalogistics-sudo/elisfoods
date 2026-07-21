@@ -77,6 +77,7 @@ class ProductsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->stackedOnMobile()
             ->contentGrid([
                 'default' => 1,
                 'md' => 2,
