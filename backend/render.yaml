@@ -16,8 +16,10 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: APP_DEBUG
+        value: "true"
       - key: APP_KEY
-        generateValue: true
+        value: base64:xUj6UqTWqxFXnfhCDTY1ocGo9FN3ba8bpTs/bPbAkf0=
       - key: APP_URL
         value: https://elis-food-api.onrender.com
       - key: DB_CONNECTION
