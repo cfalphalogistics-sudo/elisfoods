@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Eli's Food - Tasty Menu Everyday</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#00693e",
+                        "inverse-primary": "#ffb3b1",
+                        "primary": "#b90027",
+                        "on-surface-variant": "#5d3f3e",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#feb246",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#8df8b7",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-secondary-container": "#6f4600",
+                        "on-tertiary-container": "#f1fff2",
+                        "surface-container-low": "#f6f3f2",
+                        "surface": "#fcf9f8",
+                        "primary-fixed": "#ffdad8",
+                        "on-error-container": "#93000a",
+                        "outline": "#916e6d",
+                        "secondary-fixed-dim": "#ffb95a",
+                        "on-surface": "#1c1b1b",
+                        "secondary-fixed": "#ffddb6",
+                        "tertiary-fixed-dim": "#70db9d",
+                        "primary-fixed-dim": "#ffb3b1",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "surface-dim": "#dcd9d9",
+                        "secondary": "#845400",
+                        "on-secondary-fixed-variant": "#643f00",
+                        "tertiary-container": "#008550",
+                        "primary-container": "#e31837",
+                        "surface-container": "#f0eded",
+                        "on-background": "#1c1b1b",
+                        "surface-bright": "#fcf9f8",
+                        "inverse-surface": "#313030",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "background": "#fcf9f8",
+                        "surface-tint": "#bf0029",
+                        "on-primary-container": "#fffaf9",
+                        "outline-variant": "#e6bdbb",
+                        "on-tertiary-fixed": "#002110",
+                        "on-primary-fixed-variant": "#92001d",
+                        "surface-container-high": "#eae7e7",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#410007",
+                        "on-tertiary-fixed-variant": "#00522f",
+                        "on-secondary-fixed": "#2a1800",
+                        "surface-variant": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "stack-md": "24px",
+                        "container-padding-desktop": "80px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "container-padding-mobile": "20px",
+                        "stack-lg": "48px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-bold": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+        @keyframes logo-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.95; }
+        }
+        @keyframes spin-soft {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-bounce-slow { animation: bounce-slow 1.5s infinite; }
+        .animate-logo-pulse { animation: logo-pulse 2s ease-in-out infinite; }
+        .animate-spin-soft { animation: spin-soft 3s linear infinite; }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Ambient subtle grain texture for the background */
+        .brand-bg-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/p6.png");
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body class="bg-primary-container overflow-hidden">
+<!-- Main Splash Container -->
+<main class="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+<!-- Texture Layer -->
+<div class="absolute inset-0 brand-bg-texture pointer-events-none"></div>
+<!-- Decorative Background Elements (Abstract Food Shapes) -->
+<div class="absolute top-[-10%] left-[-5%] w-64 h-64 bg-primary rounded-full blur-3xl opacity-20"></div>
+<div class="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-secondary rounded-full blur-3xl opacity-20"></div>
+<!-- Center Content Stack -->
+<div class="relative z-10 flex flex-col items-center">
+<!-- Logo Container -->
+<div class="relative mb-stack-md">
+<!-- Circular Glow -->
+<div class="absolute inset-0 bg-white/20 rounded-full blur-xl scale-110"></div>
+<!-- Circular Brand Frame -->
+<div class="relative w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white/30 animate-logo-pulse">
+<!-- Logo Placeholder - Eli's Food -->
+<div class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[64px] md:text-[80px]" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-headline-md text-headline-md text-primary mt-[-4px]">Eli's</span>
+</div>
+</div>
+</div>
+<!-- Brand Slogan -->
+<div class="text-center space-y-2 mb-stack-lg">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white tracking-tight drop-shadow-md">
+                    Tasty Menu Everyday
+                </h1>
+<p class="font-body-md text-body-md text-white/80 max-w-[240px] mx-auto leading-tight">
+                    Authentic Ghanaian flavors delivered to your door.
+                </p>
+</div>
+<!-- Loading Indicator Animation -->
+<div class="flex flex-col items-center space-y-4">
+<div class="relative w-16 h-16">
+<!-- Rotating Ring -->
+<div class="absolute inset-0 border-4 border-white/20 border-t-white rounded-full animate-spin-soft"></div>
+<!-- Bouncing Food Icon -->
+<div class="absolute inset-0 flex items-center justify-center animate-bounce-slow">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="dinner_dining" style="font-variation-settings: 'FILL' 1;">dinner_dining</span>
+</div>
+</div>
+<!-- Loading Progress Text -->
+<span class="font-label-bold text-label-bold text-white/90 tracking-widest uppercase" id="loading-text">
+                    Preparing your kitchen...
+                </span>
+</div>
+</div>
+<!-- Footer / Version Anchor -->
+<div class="absolute bottom-10 left-0 w-full text-center px-container-padding-mobile">
+<p class="font-label-sm text-label-sm text-white/40">
+                © 2024 ELI'S FOOD • GHANA'S PREMIUM FOOD SERVICE
+            </p>
+</div>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingPhrases = [
+                "Preparing your kitchen...",
+                "Sourcing fresh ingredients...",
+                "Seasoning the grill...",
+                "Ready to serve!"
+            ];
+            const loadingText = document.getElementById('loading-text');
+            let index = 0;
+
+            const updateText = () => {
+                index = (index + 1) % loadingPhrases.length;
+                loadingText.style.opacity = '0';
+                setTimeout(() => {
+                    loadingText.innerText = loadingPhrases[index];
+                    loadingText.style.opacity = '1';
+                }, 300);
+            };
+
+            const interval = setInterval(updateText, 1500);
+
+            // Optional: Auto-redirect simulation for a splash screen
+            /*
+            setTimeout(() => {
+                clearInterval(interval);
+                // logic to route to Home Screen
+                console.log("Redirecting to Eli's Food Menu...");
+            }, 5000);
+            */
+        });
+    </script>
+</body></html>
