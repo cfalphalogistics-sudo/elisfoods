@@ -11,7 +11,7 @@ services:
     name: elis-food-api
     runtime: docker
     rootDir: backend
-    repo: https://github.com/joshbudu/elisfood.git
+    repo: https://github.com/cfalphalogistics-sudo/elisfoods.git
     plan: free
     envVars:
       - key: APP_ENV
