@@ -20,9 +20,12 @@ interface ApiStoreSettings {
   hours: { open: string; close: string };
   packagingFee: number;
   isOpen: boolean;
+  paymentMethods?: unknown;
 }
 
 function normalizeStoreSettings(s: ApiStoreSettings) {
+  const methods = asArray<string>(s.paymentMethods);
+
   return {
     phone: s.phone,
     whatsapp: s.whatsapp,
@@ -30,6 +33,7 @@ function normalizeStoreSettings(s: ApiStoreSettings) {
     hours_open: s.hours.open,
     hours_close: s.hours.close,
     is_open: s.isOpen,
+    payment_methods: methods.length ? methods : ["hubtel", "cash", "whatsapp"],
   };
 }
 
@@ -40,6 +44,7 @@ const fallbackStoreSettings = {
   hours_open: staticSettings.hours.open,
   hours_close: staticSettings.hours.close,
   is_open: staticSettings.isOpen,
+  payment_methods: asArray<string>(staticSettings.paymentMethods),
 };
 
 export async function fetchStoreSettings() {

@@ -22,6 +22,7 @@ interface StoreSetting {
   hours_open: string;
   hours_close: string;
   is_open: boolean;
+  payment_methods: string[];
 }
 
 function CheckoutContent() {
@@ -30,11 +31,12 @@ function CheckoutContent() {
   const whatsappMode = searchParams.get("whatsapp") === "1";
   const { items, subtotal, addOnsTotal, packagingFee, deliveryFee, discount, total, customer, setCustomer, deliveryArea, setDeliveryArea } = useCart();
 
-  const [paymentMethod, setPaymentMethod] = useState<"hubtel" | "cash" | "whatsapp">(whatsappMode ? "whatsapp" : "hubtel");
+  const [paymentMethod, setPaymentMethod] = useState<string>("hubtel");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
   const [storeSettings, setStoreSettings] = useState<StoreSetting | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -47,6 +49,22 @@ function CheckoutContent() {
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!storeSettings?.payment_methods?.length) return;
+    const methods = storeSettings.payment_methods;
+    if (whatsappMode && methods.includes("whatsapp") && paymentMethod !== "whatsapp") {
+      setPaymentMethod("whatsapp");
+      return;
+    }
+    if (!methods.includes(paymentMethod)) {
+      setPaymentMethod(methods[0]);
+    }
+  }, [storeSettings, whatsappMode, paymentMethod]);
 
   // Load saved customer details once
   useEffect(() => {
@@ -65,6 +83,14 @@ function CheckoutContent() {
   useEffect(() => {
     localStorage.setItem("elis-customer", JSON.stringify(customer));
   }, [customer]);
+
+  if (!mounted) {
+    return (
+      <main className="max-w-[1440px] mx-auto px-container-mobile md:px-container-desktop py-stack-lg text-center pb-32">
+        <h1 className="font-heading text-headline-lg mb-2">Loading checkout...</h1>
+      </main>
+    );
+  }
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -194,27 +220,23 @@ function CheckoutContent() {
           <section className="bg-surface rounded-3xl p-6 shadow-card">
             <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-primary">payments</span> Payment Method</h2>
             <div className="space-y-3">
-              <label className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${paymentMethod === "hubtel" ? "border-primary bg-primary/5" : "border-outline-variant"}`}>
-                <input type="radio" name="payment" value="hubtel" checked={paymentMethod === "hubtel"} onChange={() => setPaymentMethod("hubtel")} className="mt-1" />
-                <div>
-                  <p className="font-label-bold text-label-bold">Pay Securely with Hubtel</p>
-                  <p className="text-on-surface-variant text-body-md">Mobile Money or bank card. Instant confirmation.</p>
-                </div>
-              </label>
-              <label className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${paymentMethod === "cash" ? "border-primary bg-primary/5" : "border-outline-variant"}`}>
-                <input type="radio" name="payment" value="cash" checked={paymentMethod === "cash"} onChange={() => setPaymentMethod("cash")} className="mt-1" />
-                <div>
-                  <p className="font-label-bold text-label-bold">Pay on Delivery / Pickup</p>
-                  <p className="text-on-surface-variant text-body-md">Cash or Mobile Money when you receive.</p>
-                </div>
-              </label>
-              <label className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${paymentMethod === "whatsapp" ? "border-primary bg-primary/5" : "border-outline-variant"}`}>
-                <input type="radio" name="payment" value="whatsapp" checked={paymentMethod === "whatsapp"} onChange={() => setPaymentMethod("whatsapp")} className="mt-1" />
-                <div>
-                  <p className="font-label-bold text-label-bold">Order on WhatsApp</p>
-                  <p className="text-on-surface-variant text-body-md">Send your order summary to Eli&apos;s Food for confirmation.</p>
-                </div>
-              </label>
+              {(storeSettings?.payment_methods ?? ["hubtel", "cash", "whatsapp"]).map((method) => {
+                const label = {
+                  hubtel: { title: "Pay Securely with Hubtel", description: "Mobile Money or bank card. Instant confirmation." },
+                  cash: { title: "Pay on Delivery / Pickup", description: "Cash or Mobile Money when you receive." },
+                  whatsapp: { title: "Order on WhatsApp", description: "Send your order summary to Eli's Food for confirmation." },
+                }[method] ?? { title: method, description: "" };
+
+                return (
+                  <label key={method} className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${paymentMethod === method ? "border-primary bg-primary/5" : "border-outline-variant"}`}>
+                    <input type="radio" name="payment" value={method} checked={paymentMethod === method} onChange={() => setPaymentMethod(method)} className="mt-1" />
+                    <div>
+                      <p className="font-label-bold text-label-bold">{label.title}</p>
+                      <p className="text-on-surface-variant text-body-md">{label.description}</p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </section>
         </form>

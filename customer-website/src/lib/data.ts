@@ -340,6 +340,7 @@ export const storeSettings = {
   },
   isOpen: true,
   packagingFee: 5,
+  paymentMethods: ["hubtel", "cash", "whatsapp"],
 };
 
 export function isStoreOpen(now = new Date()): boolean {
