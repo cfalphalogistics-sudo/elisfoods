@@ -10,10 +10,10 @@ fi
 # Run migrations on every startup
 php /var/www/html/artisan migrate --force
 
-# Seed the database only if it looks empty (no categories)
+# Seed the database if admin user does not exist
 php /var/www/html/artisan tinker --execute='
-$hasData = \App\Models\Category::exists();
-exit($hasData ? 0 : 1);
+$hasAdmin = \App\Models\User::where("email", "admin@elisfood.com")->exists();
+exit($hasAdmin ? 0 : 1);
 ' >/dev/null 2>&1 || php /var/www/html/artisan db:seed --force
 
 # Ensure Filament assets are published and caches are fresh
