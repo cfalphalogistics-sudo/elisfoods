@@ -20,11 +20,13 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@elisfood.com',
-            'password' => Hash::make('password'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@elisfood.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+            ]
+        );
 
         $categories = [
             ['name' => 'All Dishes', 'slug' => 'all', 'icon' => 'restaurant_menu', 'sort_order' => 0],
