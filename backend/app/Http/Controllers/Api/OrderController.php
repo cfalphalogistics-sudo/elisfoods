@@ -39,7 +39,7 @@ class OrderController extends Controller
             'customer.delivery_instructions' => 'nullable|string',
             'customer.area' => 'nullable|string',
             'customer.preferred_time' => 'nullable|string',
-            'payment_method' => 'required|in:hubtel,cash,whatsapp',
+            'payment_method' => 'required|in:'.implode(',', StoreSetting::paymentMethods()),
             'totals' => 'required|array',
             'totals.subtotal' => 'required|numeric|min:0',
             'totals.add_ons_total' => 'required|numeric|min:0',

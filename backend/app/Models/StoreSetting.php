@@ -18,4 +18,15 @@ class StoreSetting extends Model
     {
         static::updateOrCreate(['key' => $key], ['value' => $value]);
     }
+
+    public static function paymentMethods(): array
+    {
+        $methods = json_decode(static::get('payment_methods', '[]'), true);
+
+        if (! is_array($methods) || empty($methods)) {
+            return ['hubtel', 'cash', 'whatsapp'];
+        }
+
+        return $methods;
+    }
 }

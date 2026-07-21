@@ -51,6 +51,7 @@ class ManageStoreSettings extends Page
             'hours_close' => StoreSetting::get('hours_close', '21:00'),
             'packaging_fee' => ((int) StoreSetting::get('packaging_fee', 0)) / 100,
             'is_open' => filter_var(StoreSetting::get('is_open', 'true'), FILTER_VALIDATE_BOOLEAN),
+            'payment_methods' => json_decode(StoreSetting::get('payment_methods', '[]'), true) ?: ['hubtel', 'cash', 'whatsapp'],
         ]);
     }
 
@@ -112,6 +113,20 @@ class ManageStoreSettings extends Page
                             ->label('Open for orders')
                             ->required(),
                     ]),
+
+                Section::make('Payment methods')
+                    ->schema([
+                        \Filament\Forms\Components\CheckboxList::make('payment_methods')
+                            ->label('Payment methods shown to customers')
+                            ->options([
+                                'hubtel' => 'Hubtel',
+                                'cash' => 'Cash on delivery',
+                                'whatsapp' => 'WhatsApp / manual',
+                            ])
+                            ->default(['hubtel', 'cash', 'whatsapp'])
+                            ->required()
+                            ->columns(3),
+                    ]),
             ]);
     }
 
@@ -120,7 +135,9 @@ class ManageStoreSettings extends Page
         $data = $this->form->getState();
 
         foreach ($data as $key => $value) {
-            if (is_bool($value)) {
+            if (is_array($value)) {
+                $value = json_encode($value);
+            } elseif (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }
             StoreSetting::set($key, (string) $value);

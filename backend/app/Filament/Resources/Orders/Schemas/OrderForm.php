@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Schemas;
 
+use App\Models\StoreSetting;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -63,11 +64,15 @@ class OrderForm
                     ->columns(2)
                     ->schema([
                         Select::make('payment_method')
-                            ->options([
-                                'hubtel' => 'Hubtel',
-                                'cash' => 'Cash on delivery',
-                                'whatsapp' => 'WhatsApp / manual',
-                            ])
+                            ->options(function () {
+                                $enabled = StoreSetting::paymentMethods();
+
+                                return array_intersect_key([
+                                    'hubtel' => 'Hubtel',
+                                    'cash' => 'Cash on delivery',
+                                    'whatsapp' => 'WhatsApp / manual',
+                                ], array_flip($enabled));
+                            })
                             ->required(),
                         Select::make('status')
                             ->options([

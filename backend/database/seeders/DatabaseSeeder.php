@@ -117,6 +117,7 @@ class DatabaseSeeder extends Seeder
             'hours_close' => '21:00',
             'is_open' => 'true',
             'packaging_fee' => '500',
+            'payment_methods' => json_encode(['hubtel', 'cash', 'whatsapp']),
         ];
         foreach ($settings as $key => $value) {
             StoreSetting::set($key, $value);
