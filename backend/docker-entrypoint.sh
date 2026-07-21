@@ -16,5 +16,9 @@ $hasData = \App\Models\Category::exists();
 exit($hasData ? 0 : 1);
 ' >/dev/null 2>&1 || php /var/www/html/artisan db:seed --force
 
+# Ensure Filament assets are published and caches are fresh
+php /var/www/html/artisan filament:assets
+php /var/www/html/artisan optimize
+
 # Start Apache in the foreground
 exec apache2-foreground

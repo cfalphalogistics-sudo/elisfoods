@@ -5,7 +5,9 @@ namespace App\Filament\Resources\Orders\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class OrdersTable
@@ -20,46 +22,42 @@ class OrdersTable
                     ->searchable(),
                 TextColumn::make('phone')
                     ->searchable(),
-                TextColumn::make('alt_phone')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email address')
+                TextColumn::make('deliveryArea.name')
+                    ->label('Area')
                     ->searchable(),
                 TextColumn::make('method')
-                    ->searchable(),
-                TextColumn::make('ghana_post_gps')
-                    ->searchable(),
-                TextColumn::make('landmark')
-                    ->searchable(),
-                TextColumn::make('deliveryArea.name')
-                    ->searchable(),
-                TextColumn::make('preferred_time')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'delivery' => 'info',
+                        'pickup' => 'success',
+                        default => 'gray',
+                    }),
                 TextColumn::make('payment_method')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'hubtel' => 'primary',
+                        'cash' => 'success',
+                        'whatsapp' => 'warning',
+                        default => 'gray',
+                    }),
                 TextColumn::make('status')
-                    ->searchable(),
-                TextColumn::make('subtotal')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('add_ons_total')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('packaging_fee')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('delivery_fee')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('discount')
-                    ->numeric()
-                    ->sortable(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'placed' => 'gray',
+                        'confirmed' => 'info',
+                        'preparing' => 'warning',
+                        'out-for-delivery' => 'primary',
+                        'delivered' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
                 TextColumn::make('total')
-                    ->numeric()
+                    ->money('GHS')
                     ->sortable(),
                 TextColumn::make('paid_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -70,9 +68,29 @@ class OrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->options([
+                        'placed' => 'Placed',
+                        'confirmed' => 'Confirmed',
+                        'preparing' => 'Preparing',
+                        'out-for-delivery' => 'Out for delivery',
+                        'delivered' => 'Delivered',
+                        'cancelled' => 'Cancelled',
+                    ]),
+                SelectFilter::make('payment_method')
+                    ->options([
+                        'hubtel' => 'Hubtel',
+                        'cash' => 'Cash on delivery',
+                        'whatsapp' => 'WhatsApp / manual',
+                    ]),
+                SelectFilter::make('method')
+                    ->options([
+                        'delivery' => 'Delivery',
+                        'pickup' => 'Pickup',
+                    ]),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

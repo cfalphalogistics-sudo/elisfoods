@@ -6,6 +6,8 @@ use App\Models\AddOn;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\DeliveryArea;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\StoreSetting;
 use App\Models\User;
@@ -121,6 +123,55 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->seedProducts();
+        $this->seedOrders();
+    }
+
+    private function seedOrders(): void
+    {
+        if (Order::exists()) {
+            return;
+        }
+
+        $product = Product::where('slug', 'fried-turkey-jollof')->first();
+        $area = DeliveryArea::where('slug', 'lashibi')->first();
+
+        if (! $product || ! $area) {
+            return;
+        }
+
+        $subtotal = 7500;
+        $deliveryFee = $area->fee;
+        $packagingFee = 500;
+        $total = $subtotal + $deliveryFee + $packagingFee;
+
+        $order = Order::create([
+            'reference' => 'ELI-' . strtoupper(uniqid()),
+            'customer_name' => 'John Doe',
+            'phone' => '0240000000',
+            'email' => 'john@example.com',
+            'method' => 'delivery',
+            'address' => '123 Test Street',
+            'delivery_area_id' => $area->id,
+            'payment_method' => 'hubtel',
+            'status' => 'confirmed',
+            'subtotal' => $subtotal,
+            'add_ons_total' => 0,
+            'packaging_fee' => $packagingFee,
+            'delivery_fee' => $deliveryFee,
+            'discount' => 0,
+            'total' => $total,
+        ]);
+
+        $order->items()->create([
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'price' => $product->price,
+            'quantity' => 1,
+            'size' => 'Regular',
+            'spice_level' => 'Medium',
+            'instructions' => 'Please pack neatly',
+            'add_ons' => [],
+        ]);
     }
 
     private function seedProducts(): void

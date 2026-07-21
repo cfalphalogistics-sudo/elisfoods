@@ -9,6 +9,7 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ProductsTable
@@ -17,28 +18,32 @@ class ProductsTable
     {
         return $table
             ->columns([
+                ImageColumn::make('image')
+                    ->circular(),
                 TextColumn::make('category.name')
                     ->searchable(),
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
                 TextColumn::make('price')
-                    ->money()
+                    ->money('GHS')
                     ->sortable(),
                 TextColumn::make('compare_price')
-                    ->money()
-                    ->sortable(),
-                ImageColumn::make('image'),
+                    ->money('GHS')
+                    ->sortable()
+                    ->placeholder('-'),
                 TextColumn::make('type')
+                    ->badge()
                     ->searchable(),
                 TextColumn::make('prep_time')
                     ->numeric()
-                    ->sortable(),
+                    ->suffix(' mins')
+                    ->sortable()
+                    ->placeholder('-'),
                 TextColumn::make('rating')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('badge')
+                    ->placeholder('-')
                     ->searchable(),
                 IconColumn::make('available')
                     ->boolean(),
@@ -54,7 +59,15 @@ class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('type')
+                    ->options([
+                        'fried' => 'Fried',
+                        'marinated' => 'Marinated',
+                        'frozen' => 'Frozen',
+                        'side' => 'Side',
+                        'drink' => 'Drink',
+                        'combo' => 'Combo',
+                    ]),
             ])
             ->recordActions([
                 ViewAction::make(),

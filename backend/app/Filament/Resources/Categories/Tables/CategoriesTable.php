@@ -16,13 +16,16 @@ class CategoriesTable
     {
         return $table
             ->columns([
+                TextColumn::make('sort_order')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
                 TextColumn::make('icon')
+                    ->placeholder('-')
                     ->searchable(),
-                TextColumn::make('sort_order')
+                TextColumn::make('products_count')
+                    ->label('Products')
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('is_active')
@@ -36,6 +39,7 @@ class CategoriesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('sort_order')
             ->filters([
                 //
             ])
