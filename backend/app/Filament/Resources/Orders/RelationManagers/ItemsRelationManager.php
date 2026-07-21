@@ -65,7 +65,7 @@ class ItemsRelationManager extends RelationManager
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('price')
-                    ->money('GHS')
+                    ->money('GHS', 100)
                     ->sortable(),
                 TextColumn::make('quantity')
                     ->numeric()

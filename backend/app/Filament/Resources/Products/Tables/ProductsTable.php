@@ -25,10 +25,10 @@ class ProductsTable
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('price')
-                    ->money('GHS')
+                    ->money('GHS', 100)
                     ->sortable(),
                 TextColumn::make('compare_price')
-                    ->money('GHS')
+                    ->money('GHS', 100)
                     ->sortable()
                     ->placeholder('-'),
                 TextColumn::make('type')

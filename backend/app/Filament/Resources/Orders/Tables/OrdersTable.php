@@ -52,7 +52,7 @@ class OrdersTable
                         default => 'gray',
                     }),
                 TextColumn::make('total')
-                    ->money('GHS')
+                    ->money('GHS', 100)
                     ->sortable(),
                 TextColumn::make('paid_at')
                     ->dateTime()

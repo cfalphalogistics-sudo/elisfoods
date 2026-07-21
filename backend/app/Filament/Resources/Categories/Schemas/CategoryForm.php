@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Categories\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Set;
@@ -28,6 +29,12 @@ class CategoryForm
                 TextInput::make('icon')
                     ->placeholder('e.g. local_dining')
                     ->hint('Material Symbols icon name used by the frontend'),
+                FileUpload::make('image')
+                    ->label('Icon image')
+                    ->image()
+                    ->directory('categories')
+                    ->maxSize(1024)
+                    ->columnSpanFull(),
                 TextInput::make('sort_order')
                     ->required()
                     ->numeric()

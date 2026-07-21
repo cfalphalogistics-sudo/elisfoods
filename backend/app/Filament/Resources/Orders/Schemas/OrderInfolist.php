@@ -77,12 +77,12 @@ class OrderInfolist
                 Section::make('Totals')
                     ->columns(3)
                     ->schema([
-                        TextEntry::make('subtotal')->money('GHS'),
-                        TextEntry::make('add_ons_total')->money('GHS'),
-                        TextEntry::make('packaging_fee')->money('GHS'),
-                        TextEntry::make('delivery_fee')->money('GHS'),
-                        TextEntry::make('discount')->money('GHS'),
-                        TextEntry::make('total')->money('GHS'),
+                        TextEntry::make('subtotal')->money('GHS', 100),
+                        TextEntry::make('add_ons_total')->money('GHS', 100),
+                        TextEntry::make('packaging_fee')->money('GHS', 100),
+                        TextEntry::make('delivery_fee')->money('GHS', 100),
+                        TextEntry::make('discount')->money('GHS', 100),
+                        TextEntry::make('total')->money('GHS', 100),
                     ]),
 
                 Section::make('Notes')

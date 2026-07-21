@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -19,6 +20,10 @@ class CategoriesTable
                 TextColumn::make('sort_order')
                     ->numeric()
                     ->sortable(),
+                ImageColumn::make('image')
+                    ->label('Icon')
+                    ->circular()
+                    ->placeholder('-'),
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('icon')

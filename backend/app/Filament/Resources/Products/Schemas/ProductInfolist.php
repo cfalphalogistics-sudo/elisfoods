@@ -47,9 +47,9 @@ class ProductInfolist
                     ->columns(2)
                     ->schema([
                         TextEntry::make('price')
-                            ->money('GHS'),
+                            ->money('GHS', 100),
                         TextEntry::make('compare_price')
-                            ->money('GHS')
+                            ->money('GHS', 100)
                             ->placeholder('-'),
                     ]),
 
@@ -83,7 +83,7 @@ class ProductInfolist
                         RepeatableEntry::make('variations')
                             ->schema([
                                 TextEntry::make('label'),
-                                TextEntry::make('price')->money('GHS'),
+                                TextEntry::make('price')->money('GHS', 100),
                                 TextEntry::make('stock_quantity'),
                             ])
                             ->columns(3)

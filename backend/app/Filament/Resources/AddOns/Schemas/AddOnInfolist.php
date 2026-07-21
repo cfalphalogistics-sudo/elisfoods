@@ -18,7 +18,7 @@ class AddOnInfolist
                     ->badge()
                     ->placeholder('-'),
                 TextEntry::make('price')
-                    ->money('GHS'),
+                    ->money('GHS', 100),
                 IconEntry::make('is_active')
                     ->boolean(),
                 TextEntry::make('created_at')

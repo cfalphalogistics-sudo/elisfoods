@@ -19,7 +19,7 @@ class VariationsTable
                 TextColumn::make('label')
                     ->searchable(),
                 TextColumn::make('price')
-                    ->money()
+                    ->money('GHS', 100)
                     ->sortable(),
                 TextColumn::make('stock_quantity')
                     ->numeric()

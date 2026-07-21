@@ -22,7 +22,7 @@ class AddOnsTable
                     ->badge()
                     ->searchable(),
                 TextColumn::make('price')
-                    ->money('GHS')
+                    ->money('GHS', 100)
                     ->sortable(),
                 TextColumn::make('products_count')
                     ->label('Linked products')
