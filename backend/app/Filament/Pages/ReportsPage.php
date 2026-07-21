@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use UnitEnum;
 
 class ReportsPage extends Page
 {
@@ -19,7 +20,7 @@ class ReportsPage extends Page
 
     protected static ?string $navigationLabel = 'Reports';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Management';
+    protected static string | UnitEnum | null $navigationGroup = 'Management';
 
     protected static ?int $navigationSort = 1;
 

@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use UnitEnum;
 
 class ManageStoreSettings extends Page
 {
@@ -23,7 +24,7 @@ class ManageStoreSettings extends Page
 
     protected static ?string $navigationLabel = 'Store Settings';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Management';
+    protected static string | UnitEnum | null $navigationGroup = 'Management';
 
     protected static ?int $navigationSort = 2;
 

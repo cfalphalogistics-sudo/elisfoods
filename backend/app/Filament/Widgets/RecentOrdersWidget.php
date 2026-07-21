@@ -17,11 +17,13 @@ class RecentOrdersWidget extends TableWidget
 
     protected static ?int $sort = 2;
 
+    protected static bool $isLazy = false;
+
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                OrderResource::getEloquentQuery()
+                fn () => OrderResource::getEloquentQuery()
                     ->latest()
                     ->limit(5)
             )
