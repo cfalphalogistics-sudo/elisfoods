@@ -72,6 +72,11 @@ class RecentOrdersWidget extends TableWidget
                 \Filament\Actions\Action::make('view')
                     ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),
+            ])
+            ->contentGrid([
+                'default' => 1,
+                'md' => 2,
+                'xl' => 3,
             ]);
     }
 }
