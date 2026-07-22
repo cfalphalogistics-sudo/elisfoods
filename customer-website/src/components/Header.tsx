@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 
@@ -29,8 +30,8 @@ export default function Header() {
     <header className="sticky top-0 z-40 w-full bg-surface/90 backdrop-blur-md shadow-sm">
       <div className="flex flex-col md:flex-row items-center justify-between px-container-mobile md:px-container-desktop py-4">
         <div className="flex items-center justify-between w-full md:w-auto">
-          <Link href="/" className="font-heading text-headline-md font-bold text-primary">
-            Eli&apos;s Food
+          <Link href="/" className="flex items-center" aria-label="Eli's Food home">
+            <Image src="/logo.png" alt="Eli's Food" width={44} height={44} priority className="h-11 w-11" />
           </Link>
           <div className="flex md:hidden gap-4 text-primary">
             <Link href="/menu" className="material-symbols-outlined">search</Link>

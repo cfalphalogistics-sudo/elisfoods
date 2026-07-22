@@ -103,13 +103,15 @@ export default function HomePage() {
           <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-secondary rounded-full blur-3xl opacity-20" />
           <div className="relative z-10 flex flex-col items-center">
             <div className="relative mb-stack-md">
-              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl scale-110" />
-              <div className="relative w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white/30 animate-pulse">
-                <div className="flex flex-col items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-[64px] md:text-[80px]" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
-                  <span className="font-heading text-headline-md text-primary mt-[-4px]">Eli&apos;s</span>
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-white/30 rounded-full blur-2xl scale-125" />
+              <Image
+                src="/logo.png"
+                alt="Eli's Food"
+                width={192}
+                height={192}
+                priority
+                className="relative w-40 h-40 md:w-48 md:h-48 drop-shadow-2xl animate-pulse"
+              />
             </div>
             <h1 className="font-heading text-headline-lg-mobile md:text-headline-lg text-white tracking-tight drop-shadow-md mb-2">
               Tasty Menu Everyday

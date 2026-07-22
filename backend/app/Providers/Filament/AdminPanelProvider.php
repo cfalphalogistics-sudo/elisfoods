@@ -32,6 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName("Eli's Food Admin")
             ->brandLogo(fn () => view('filament.admin.logo'))
+            ->favicon(asset('favicon.ico'))
             ->font('Plus Jakarta Sans')
             ->colors([
                 'primary' => Color::Orange,
@@ -41,7 +42,6 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
                 'danger' => Color::Rose,
             ])
-            ->viteTheme('resources/css/filament/admin/theme.css')
             ->sidebarCollapsibleOnDesktop()
             ->spa()
             ->databaseNotifications()

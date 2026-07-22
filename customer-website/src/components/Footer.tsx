@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 export default function Footer() {
@@ -9,7 +10,7 @@ export default function Footer() {
   return (
     <footer className="w-full py-stack-lg px-container-mobile md:px-container-desktop grid grid-cols-1 md:grid-cols-4 gap-gutter bg-surface-container-highest border-t border-outline-variant mb-20 md:mb-0">
       <div className="space-y-4">
-        <span className="font-heading text-headline-md font-extrabold text-primary">Eli&apos;s Food</span>
+        <Image src="/logo.png" alt="Eli's Food" width={56} height={56} className="h-14 w-14" />
         <p className="text-on-surface-variant text-body-md">
           Bringing the finest fried delights and gourmet kitchen essentials straight to your doorstep.
         </p>
