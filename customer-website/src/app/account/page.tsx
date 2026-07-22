@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { formatPrice, storeSettings } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import { useOrders, type Order } from "@/contexts/OrderContext";
 import { statusLabel } from "@/lib/services/orderService";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import Link from "next/link";
 
 const addresses = [
@@ -22,6 +23,7 @@ export default function AccountPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const { customer } = useCart();
   const { orders } = useOrders();
+  const storeSettings = useStoreSettings();
   const displayName = customer.name.trim() || "Guest";
   const displayPhone = customer.phone.trim() || storeSettings.phone;
 

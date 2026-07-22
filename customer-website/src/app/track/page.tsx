@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { formatPrice, storeSettings } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
 import { useOrders, type Order } from "@/contexts/OrderContext";
 import { statusLabel, statusIcon, fetchOrderByReference } from "@/lib/services/orderService";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -19,6 +20,7 @@ const allStatuses = [
 function TrackContent() {
   const searchParams = useSearchParams();
   const { getOrderByReference } = useOrders();
+  const storeSettings = useStoreSettings();
   // Never seed state from useSearchParams() at init: this site is statically
   // exported, so the prerendered HTML always has an empty query string. Reading
   // the real URL immediately on the client's first render (before hydration

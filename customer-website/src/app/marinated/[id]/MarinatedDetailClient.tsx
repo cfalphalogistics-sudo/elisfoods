@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
-import { formatPrice, storeSettings, type Product } from "@/lib/data";
+import { formatPrice, type Product } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 interface Props {
   product: Product;
@@ -15,6 +16,7 @@ export default function MarinatedDetailClient({ product }: Props) {
   const router = useRouter();
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const storeSettings = useStoreSettings();
 
   const [quantity, setQuantity] = useState(1);
   const [selectedVariation, setSelectedVariation] = useState(product.variations?.[0] || null);

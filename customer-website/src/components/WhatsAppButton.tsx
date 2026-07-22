@@ -1,10 +1,11 @@
 "use client";
 
-import { storeSettings } from "@/lib/data";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 export default function WhatsAppButton() {
+  const { whatsapp } = useStoreSettings();
   const message = encodeURIComponent("Hello Eli's Food, I'd like to place an order.");
-  const whatsappUrl = `https://wa.me/${storeSettings.whatsapp}?text=${message}`;
+  const whatsappUrl = `https://wa.me/${whatsapp}?text=${message}`;
 
   return (
     <a

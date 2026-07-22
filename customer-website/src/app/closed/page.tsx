@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import { storeSettings } from "@/lib/data";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 export default function ClosedPage() {
+  const storeSettings = useStoreSettings();
   const whatsappUrl = `https://wa.me/${storeSettings.whatsapp}?text=${encodeURIComponent("Hello Eli's Food, I would like to place a pre-order for when you open.")}`;
 
   return (
@@ -17,7 +20,7 @@ export default function ClosedPage() {
       <div className="bg-surface rounded-3xl p-6 shadow-card max-w-md mx-auto mb-8 text-left">
         <p className="font-label-bold text-label-bold uppercase tracking-wider text-on-surface-variant mb-2">Opening Hours</p>
         <p className="text-body-md text-on-surface mb-1">Monday — Sunday</p>
-        <p className="text-body-md text-on-surface-variant">{storeSettings.hours.open} — {storeSettings.hours.close}</p>
+        <p className="text-body-md text-on-surface-variant">{storeSettings.hoursOpen} — {storeSettings.hoursClose}</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">

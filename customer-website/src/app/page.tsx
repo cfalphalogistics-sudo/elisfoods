@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { storeSettings, isStoreOpen } from "@/lib/data";
 import { fetchProducts, fetchCategories } from "@/lib/services/productService";
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/lib/data";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 function StoreBanner() {
-  const [open, setOpen] = useState(storeSettings.isOpen);
-  useEffect(() => {
-    setOpen(isStoreOpen());
-  }, []);
-  const whatsappUrl = `https://wa.me/${storeSettings.whatsapp}?text=${encodeURIComponent("Hello Eli's Food, I would like to place a pre-order.")}`;
+  // isOpen is the admin's manual toggle from the Store Settings page — it's
+  // the source of truth, not a client-side hours calculation, so a holiday
+  // closure or early close actually reflects here.
+  const { isOpen: open, whatsapp } = useStoreSettings();
+  const whatsappUrl = `https://wa.me/${whatsapp}?text=${encodeURIComponent("Hello Eli's Food, I would like to place a pre-order.")}`;
   return (
     <div className={`${open ? "bg-tertiary" : "bg-error"} text-white py-3 px-container-mobile md:px-container-desktop`}>
       <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-center gap-2 text-center">

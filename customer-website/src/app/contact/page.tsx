@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast } from "@/contexts/ToastContext";
-import { storeSettings } from "@/lib/data";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const faqs = [
   { q: "Where is my order?", a: "Use the Track Order page with your order number and phone number." },
@@ -13,6 +13,7 @@ const faqs = [
 
 export default function ContactPage() {
   const { showToast } = useToast();
+  const storeSettings = useStoreSettings();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     showToast("Support form submission requires a backend endpoint.", "info");
@@ -56,7 +57,7 @@ export default function ContactPage() {
           <div>
             <p className="font-label-bold text-label-bold mb-2 uppercase tracking-wider text-on-surface-variant">Opening Hours</p>
             <p className="mb-1">Monday — Sunday</p>
-            <p className="text-on-surface-variant">{storeSettings.hours.open} — {storeSettings.hours.close}</p>
+            <p className="text-on-surface-variant">{storeSettings.hoursOpen} — {storeSettings.hoursClose}</p>
           </div>
           <div>
             <p className="font-label-bold text-label-bold mb-2 uppercase tracking-wider text-on-surface-variant">Delivery Areas</p>

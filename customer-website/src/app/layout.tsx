@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/contexts/CartContext";
 import { OrderProvider } from "@/contexts/OrderContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { StoreSettingsProvider } from "@/contexts/StoreSettingsContext";
 import Header from "@/components/Header";
 import MobileNav from "@/components/MobileNav";
 import Footer from "@/components/Footer";
@@ -28,17 +29,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-background text-foreground font-body min-h-screen flex flex-col">
-        <ToastProvider>
-          <OrderProvider>
-            <CartProvider>
-              <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <MobileNav />
-            <WhatsAppButton />
-            </CartProvider>
-          </OrderProvider>
-        </ToastProvider>
+        <StoreSettingsProvider>
+          <ToastProvider>
+            <OrderProvider>
+              <CartProvider>
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+                <MobileNav />
+                <WhatsAppButton />
+              </CartProvider>
+            </OrderProvider>
+          </ToastProvider>
+        </StoreSettingsProvider>
       </body>
     </html>
   );

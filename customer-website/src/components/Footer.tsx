@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
-import { storeSettings } from "@/lib/data";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 export default function Footer() {
+  const storeSettings = useStoreSettings();
+
   return (
     <footer className="w-full py-stack-lg px-container-mobile md:px-container-desktop grid grid-cols-1 md:grid-cols-4 gap-gutter bg-surface-container-highest border-t border-outline-variant mb-20 md:mb-0">
       <div className="space-y-4">

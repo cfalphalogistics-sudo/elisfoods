@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { formatPrice, storeSettings, type Product, type AddOn } from "@/lib/data";
+import { formatPrice, type Product, type AddOn } from "@/lib/data";
 import { fetchAddOns, fetchProducts } from "@/lib/services/productService";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import ProductCard from "@/components/ProductCard";
 
 interface Props {
@@ -18,6 +19,7 @@ export default function ProductDetailClient({ product: initialProduct }: Props) 
   const router = useRouter();
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const storeSettings = useStoreSettings();
 
   const [product, setProduct] = useState<Product>(initialProduct);
   const [allAddOns, setAllAddOns] = useState<AddOn[]>([]);
