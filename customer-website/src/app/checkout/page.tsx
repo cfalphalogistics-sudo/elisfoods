@@ -30,7 +30,7 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const whatsappMode = searchParams.get("whatsapp") === "1";
-  const { items, subtotal, addOnsTotal, packagingFee, deliveryFee, discount, total, customer, setCustomer, deliveryArea, setDeliveryArea } = useCart();
+  const { items, subtotal, addOnsTotal, packagingFee, deliveryFee, discount, total, customer, setCustomer, deliveryArea, setDeliveryArea, isHydrated } = useCart();
 
   const [paymentMethod, setPaymentMethod] = useState<string>("hubtel");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,7 +85,11 @@ function CheckoutContent() {
     localStorage.setItem("elis-customer", JSON.stringify(customer));
   }, [customer]);
 
-  if (!mounted) {
+  // Wait for CartContext to finish loading the real cart from localStorage
+  // (isHydrated) before deciding it's empty — otherwise this can flash "Your
+  // cart is empty" for a frame even when the customer has items, since child
+  // effects (mounted=true) fire before CartProvider's own hydration effect.
+  if (!mounted || !isHydrated) {
     return (
       <main className="max-w-[1440px] mx-auto px-container-mobile md:px-container-desktop py-stack-lg text-center pb-32">
         <h1 className="font-heading text-headline-lg mb-2">Loading checkout...</h1>

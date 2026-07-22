@@ -22,6 +22,11 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
+  // False until the real cart has been loaded from localStorage (see
+  // CartProvider). Pages that branch on `items` being empty at mount —
+  // treating it as "cart is empty" or gating a one-time effect — must wait
+  // for this to be true first, or they'll act on the pre-hydration [] state.
+  isHydrated: boolean;
   addItem: (item: Omit<CartItem, "id">) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -87,16 +92,32 @@ function loadStoredCart(): CartItem[] {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(loadStoredCart);
+  // Start empty on both the prerendered HTML and the client's first hydration
+  // pass, then load real localStorage data after mount. Reading localStorage
+  // directly in the initializer would make the first client render diverge
+  // from the static HTML (this site is statically exported) and trigger a
+  // React hydration mismatch (error #418).
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [deliveryArea, setDeliveryArea] = useState("lashibi");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-  const [orderReference, setOrderReference] = useState(generateOrderReference);
+  // Placeholder only — generateOrderReference() uses the current time, which
+  // would also differ between build time and hydration time. The real order
+  // number always comes from the API response once an order is created.
+  const [orderReference, setOrderReference] = useState("");
   const [customer, setCustomerState] = useState<CustomerInfo>(defaultCustomer);
 
   useEffect(() => {
+    setItems(loadStoredCart());
+    setOrderReference(generateOrderReference());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
   const resetOrderReference = useCallback(() => setOrderReference(generateOrderReference()), []);
 
@@ -162,6 +183,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider
       value={{
         items,
+        isHydrated: hydrated,
         addItem,
         removeItem,
         updateQuantity,

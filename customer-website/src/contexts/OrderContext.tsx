@@ -23,7 +23,7 @@ export interface Order {
 
 interface OrderContextType {
   orders: Order[];
-  addOrder: (order: Omit<Order, "createdAt">) => void;
+  addOrder: (order: Omit<Order, "createdAt">) => Promise<Order>;
   getOrderByReference: (reference: string) => Order | undefined;
   updateOrderStatus: (reference: string, status: OrderStatus) => void;
 }
@@ -43,11 +43,23 @@ function loadStoredOrders(): Order[] {
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export function OrderProvider({ children }: { children: React.ReactNode }) {
-  const [orders, setOrders] = useState<Order[]>(loadStoredOrders);
+  // Start empty on both the prerendered HTML and the client's first hydration
+  // pass, then load real localStorage data after mount. Reading localStorage
+  // directly in the initializer would make the first client render diverge
+  // from the static HTML (this site is statically exported) and trigger a
+  // React hydration mismatch (error #418).
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    setOrders(loadStoredOrders());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
-  }, [orders]);
+  }, [orders, hydrated]);
 
   const addOrder = useCallback(async (order: Omit<Order, "createdAt">): Promise<Order> => {
     const created = await createOrderApi(order);

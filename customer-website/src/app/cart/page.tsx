@@ -61,7 +61,7 @@ function CartLineItem({ item }: { item: CartItem }) {
 }
 
 export default function CartPage() {
-  const { items, subtotal, addOnsTotal, packagingFee, deliveryFee, discount, total, itemCount, couponCode, setCouponCode, applyCoupon, appliedCoupon, updateItem } = useCart();
+  const { items, subtotal, addOnsTotal, packagingFee, deliveryFee, discount, total, itemCount, couponCode, setCouponCode, applyCoupon, appliedCoupon, updateItem, isHydrated } = useCart();
   const router = useRouter();
   const { showToast } = useToast();
   const suggestions = addOns.filter((a) => ["coleslaw", "shito", "soft-drink", "fried-yam"].includes(a.id));
@@ -76,6 +76,14 @@ export default function CartPage() {
     updateItem(target.id, { addOns: [...target.addOns, addon] });
     showToast(`${addon.name} added to ${target.name}`, "success");
   };
+
+  // Wait for the real cart to load from localStorage before declaring it
+  // empty — items starts at [] on every page load until that finishes (see
+  // CartContext), so checking this too early flashes "cart is empty" even
+  // when the customer has items.
+  if (!isHydrated) {
+    return <main className="max-w-[1440px] mx-auto px-container-mobile md:px-container-desktop py-stack-lg" />;
+  }
 
   if (items.length === 0) {
     return (
