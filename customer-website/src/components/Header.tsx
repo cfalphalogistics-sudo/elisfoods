@@ -12,6 +12,15 @@ const navLinks = [
   { href: "/track", label: "Track Order" },
 ];
 
+// These two categories have no equivalent in MobileNav's bottom tab bar
+// (which only covers Home/Menu/Track/Orders/Account), so on mobile they were
+// only reachable via the desktop-only nav above — effectively invisible on
+// phones. Surfaced here as a scrollable chip row for mobile.
+const mobileCategoryShortcuts = [
+  { href: "/menu?category=marinated", label: "Marinated Meat" },
+  { href: "/menu?category=frozen", label: "Frozen Products" },
+];
+
 export default function Header() {
   const pathname = usePathname();
   const { itemCount } = useCart();
@@ -35,6 +44,21 @@ export default function Header() {
             </Link>
           </div>
         </div>
+
+        <nav
+          aria-label="Shop by category"
+          className="flex md:hidden w-full items-center gap-2 overflow-x-auto hide-scrollbar mt-3 -mx-container-mobile px-container-mobile pb-1"
+        >
+          {mobileCategoryShortcuts.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="shrink-0 px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-bold text-label-sm whitespace-nowrap hover:bg-surface-container-highest transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
         <nav className="hidden md:flex items-center gap-8 mt-4 md:mt-0">
           {navLinks.map((link) => {
