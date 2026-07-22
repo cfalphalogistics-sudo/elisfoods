@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/SocialIcons";
 
 export default function Footer() {
   const storeSettings = useStoreSettings();
@@ -15,14 +16,14 @@ export default function Footer() {
           Bringing the finest fried delights and gourmet kitchen essentials straight to your doorstep.
         </p>
         <div className="flex gap-4">
-          <a href={storeSettings.social.facebook} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-primary hover:text-white transition-colors material-symbols-outlined text-[20px]">
-            face_nod
+          <a href={storeSettings.social.facebook} target="_blank" rel="noopener noreferrer" aria-label="Eli's Food on Facebook" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+            <FacebookIcon className="w-5 h-5" />
           </a>
-          <a href={storeSettings.social.instagram} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-primary hover:text-white transition-colors material-symbols-outlined text-[20px]">
-            photo_camera
+          <a href={storeSettings.social.instagram} target="_blank" rel="noopener noreferrer" aria-label="Eli's Food on Instagram" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+            <InstagramIcon className="w-5 h-5" />
           </a>
-          <a href={storeSettings.social.tiktok} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-primary hover:text-white transition-colors material-symbols-outlined text-[20px]">
-            music_note
+          <a href={storeSettings.social.tiktok} target="_blank" rel="noopener noreferrer" aria-label="Eli's Food on TikTok" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+            <TikTokIcon className="w-5 h-5" />
           </a>
         </div>
       </div>

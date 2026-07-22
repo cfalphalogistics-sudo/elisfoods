@@ -2,6 +2,7 @@
 
 import { useToast } from "@/contexts/ToastContext";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/SocialIcons";
 
 const faqs = [
   { q: "Where is my order?", a: "Use the Track Order page with your order number and phone number." },
@@ -65,9 +66,15 @@ export default function ContactPage() {
           </div>
         </div>
         <div className="mt-8 flex gap-4 justify-center md:justify-start">
-          <a href={storeSettings.social.facebook} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center material-symbols-outlined hover:bg-primary/90">face_nod</a>
-          <a href={storeSettings.social.instagram} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center material-symbols-outlined hover:bg-primary/90">photo_camera</a>
-          <a href={storeSettings.social.tiktok} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center material-symbols-outlined hover:bg-primary/90">music_note</a>
+          <a href={storeSettings.social.facebook} target="_blank" rel="noopener noreferrer" aria-label="Eli's Food on Facebook" className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90">
+            <FacebookIcon className="w-6 h-6" />
+          </a>
+          <a href={storeSettings.social.instagram} target="_blank" rel="noopener noreferrer" aria-label="Eli's Food on Instagram" className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90">
+            <InstagramIcon className="w-6 h-6" />
+          </a>
+          <a href={storeSettings.social.tiktok} target="_blank" rel="noopener noreferrer" aria-label="Eli's Food on TikTok" className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90">
+            <TikTokIcon className="w-6 h-6" />
+          </a>
         </div>
       </section>
 
