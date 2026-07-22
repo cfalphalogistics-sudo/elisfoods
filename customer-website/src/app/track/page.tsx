@@ -18,9 +18,12 @@ const allStatuses = [
 
 function TrackContent() {
   const searchParams = useSearchParams();
-  const initialRef = searchParams.get("ref") || "";
   const { getOrderByReference } = useOrders();
-  const [orderNumber, setOrderNumber] = useState(initialRef);
+  // Never seed state from useSearchParams() at init: this site is statically
+  // exported, so the prerendered HTML always has an empty query string. Reading
+  // the real URL immediately on the client's first render (before hydration
+  // reconciles) would mismatch the server-rendered markup (React error #418).
+  const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,11 +46,15 @@ function TrackContent() {
     void lookupOrder(orderNumber);
   };
 
-  // Auto-lookup when arriving with ?ref=...
+  // Auto-lookup when arriving with ?ref=... — read after mount, not during initial render.
   useEffect(() => {
-    if (initialRef) void lookupOrder(initialRef);
+    const ref = searchParams.get("ref") || "";
+    if (ref) {
+      setOrderNumber(ref);
+      void lookupOrder(ref);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialRef]);
+  }, [searchParams]);
 
   // Poll the API so status changes appear live while the page is open.
   useEffect(() => {
