@@ -102,6 +102,38 @@ export async function fetchDeliveryAreas() {
   }
 }
 
+export interface Promotion {
+  slot: string;
+  eyebrow: string | null;
+  headline: string;
+  body: string | null;
+  image: string | null;
+  primary_label: string | null;
+  primary_url: string | null;
+  secondary_label: string | null;
+  secondary_url: string | null;
+}
+
+/**
+ * Fetches admin-managed marketing banners, keyed by slot (e.g.
+ * "homepage_freezer"). Returns an empty object on failure so callers can
+ * fall back to their own hardcoded default copy rather than rendering blank.
+ */
+export async function fetchPromotions(): Promise<Record<string, Promotion>> {
+  try {
+    const res = await fetch(`${API_BASE}/api/promotions`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    const list = asArray<Promotion>(data);
+    return Object.fromEntries(list.map((p) => [p.slot, p]));
+  } catch (error) {
+    console.error("Failed to fetch promotions from API:", error);
+    return {};
+  }
+}
+
 export async function validateCoupon(code: string) {
   try {
     const res = await fetch(`${API_BASE}/api/coupons/validate`, {

@@ -4,9 +4,22 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchProducts, fetchCategories } from "@/lib/services/productService";
+import { fetchPromotions, type Promotion } from "@/lib/services/storeService";
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/lib/data";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+
+const freezerPromoDefault: Promotion = {
+  slot: "homepage_freezer",
+  eyebrow: "Home Cooking Made Easy",
+  headline: "Stock Your Freezer",
+  body: "Skip the prep! Our vacuum-sealed marinated meats and pre-portioned frozen products are ready to cook whenever you are.",
+  image: "https://images.unsplash.com/photo-1607623814075-e51df1bd6567?auto=format&fit=crop&w=1200&q=80",
+  primary_label: "Shop Marinated Meat",
+  primary_url: "/menu?category=marinated",
+  secondary_label: "View Frozen Range",
+  secondary_url: "/menu?category=frozen",
+};
 
 function StoreBanner() {
   // isOpen is the admin's manual toggle from the Store Settings page — it's
@@ -49,6 +62,10 @@ export default function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  // Prerendered HTML has no way to know the admin's edits, so start from the
+  // same default copy that's hardcoded here and swap in the live version
+  // after mount — same hydration-safe pattern as CartContext.
+  const [freezerPromo, setFreezerPromo] = useState<Promotion>(freezerPromoDefault);
 
   useEffect(() => {
     const visited = sessionStorage.getItem("elis-splash-seen");
@@ -62,12 +79,14 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadData = async () => {
-      const [productsData, categoriesData] = await Promise.all([
+      const [productsData, categoriesData, promotions] = await Promise.all([
         fetchProducts(),
         fetchCategories(),
+        fetchPromotions(),
       ]);
       setProducts(productsData);
       setCategories(categoriesData);
+      if (promotions.homepage_freezer) setFreezerPromo(promotions.homepage_freezer);
     };
     loadData();
   }, []);
@@ -201,28 +220,40 @@ export default function HomePage() {
         <section className="py-stack-lg px-container-mobile md:px-container-desktop">
           <div className="bg-secondary-container rounded-4xl overflow-hidden flex flex-col lg:flex-row items-stretch">
             <div className="flex-1 p-stack-lg space-y-stack-md flex flex-col justify-center">
-              <span className="font-label-bold text-label-bold text-on-secondary-container uppercase tracking-widest">Home Cooking Made Easy</span>
-              <h2 className="font-heading text-headline-xl text-on-secondary-container">Stock Your Freezer</h2>
-              <p className="text-body-lg text-on-secondary-container/80">
-                Skip the prep! Our vacuum-sealed marinated meats and pre-portioned frozen products are ready to cook whenever you are.
-              </p>
+              {freezerPromo.eyebrow && (
+                <span className="font-label-bold text-label-bold text-on-secondary-container uppercase tracking-widest">{freezerPromo.eyebrow}</span>
+              )}
+              <h2 className="font-heading text-headline-xl text-on-secondary-container">{freezerPromo.headline}</h2>
+              {freezerPromo.body && (
+                <p className="text-body-lg text-on-secondary-container/80">{freezerPromo.body}</p>
+              )}
               <div className="flex gap-4 pt-4 flex-wrap">
-                <Link href="/menu?category=marinated" className="px-8 py-4 bg-primary text-on-primary rounded-full font-label-bold text-label-bold shadow-lg hover:scale-105 transition-transform">
-                  Shop Marinated Meat
-                </Link>
-                <Link href="/menu?category=frozen" className="px-8 py-4 bg-on-secondary-container text-on-secondary rounded-full font-label-bold text-label-bold hover:scale-105 transition-transform">
-                  View Frozen Range
-                </Link>
+                {freezerPromo.primary_label && freezerPromo.primary_url && (
+                  <Link href={freezerPromo.primary_url} className="px-8 py-4 bg-primary text-on-primary rounded-full font-label-bold text-label-bold shadow-lg hover:scale-105 transition-transform">
+                    {freezerPromo.primary_label}
+                  </Link>
+                )}
+                {freezerPromo.secondary_label && freezerPromo.secondary_url && (
+                  <Link href={freezerPromo.secondary_url} className="px-8 py-4 bg-on-secondary-container text-on-secondary rounded-full font-label-bold text-label-bold hover:scale-105 transition-transform">
+                    {freezerPromo.secondary_label}
+                  </Link>
+                )}
               </div>
             </div>
-            <div className="flex-1 min-h-[400px] relative">
-              <Image
-                src="https://images.unsplash.com/photo-1607623814075-e51df1bd6567?auto=format&fit=crop&w=1200&q=80"
-                alt="Vacuum sealed marinated meats"
-                fill
-                className="object-cover"
-              />
-            </div>
+            {freezerPromo.image && (
+              <div className="flex-1 min-h-[400px] relative">
+                {/* Plain <img>, not next/image: this URL is admin-controlled
+                    (Unsplash by default, or the backend's own storage host
+                    once someone uploads a real photo) and can't be known
+                    ahead of time for next.config's remotePatterns allowlist. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={freezerPromo.image}
+                  alt={freezerPromo.headline}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
+            )}
           </div>
         </section>
 

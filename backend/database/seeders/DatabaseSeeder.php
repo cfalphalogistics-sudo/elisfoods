@@ -9,6 +9,7 @@ use App\Models\DeliveryArea;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\StoreSetting;
 use App\Models\User;
 use App\Models\Variation;
@@ -361,5 +362,25 @@ class DatabaseSeeder extends Seeder
                 $product->variations()->create($variation);
             }
         }
+
+        Promotion::firstOrCreate(['slot' => 'homepage_freezer'], [
+            'eyebrow' => 'Home Cooking Made Easy',
+            'headline' => 'Stock Your Freezer',
+            'body' => "Skip the prep! Our vacuum-sealed marinated meats and pre-portioned frozen products are ready to cook whenever you are.",
+            'image' => 'https://images.unsplash.com/photo-1607623814075-e51df1bd6567?auto=format&fit=crop&w=1200&q=80',
+            'primary_label' => 'Shop Marinated Meat',
+            'primary_url' => '/menu?category=marinated',
+            'secondary_label' => 'View Frozen Range',
+            'secondary_url' => '/menu?category=frozen',
+            'is_active' => true,
+        ]);
+
+        Promotion::firstOrCreate(['slot' => 'menu_sidebar'], [
+            'eyebrow' => 'Weekly Special',
+            'headline' => 'Free Delivery on orders over ₵200',
+            'primary_label' => 'Order Now',
+            'primary_url' => '/menu',
+            'is_active' => true,
+        ]);
     }
 }

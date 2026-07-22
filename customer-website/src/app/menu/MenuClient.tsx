@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { fetchProducts, fetchCategories } from "@/lib/services/productService";
+import { fetchPromotions, type Promotion } from "@/lib/services/storeService";
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import type { Product } from "@/lib/data";
@@ -13,6 +15,18 @@ interface Category {
   slug: string;
   icon: string;
 }
+
+const sidebarPromoDefault: Promotion = {
+  slot: "menu_sidebar",
+  eyebrow: "Weekly Special",
+  headline: "Free Delivery on orders over ₵200",
+  body: null,
+  image: null,
+  primary_label: "Order Now",
+  primary_url: "/menu",
+  secondary_label: null,
+  secondary_url: null,
+};
 
 function MenuContent() {
   const searchParams = useSearchParams();
@@ -26,15 +40,18 @@ function MenuContent() {
   const [visibleCount, setVisibleCount] = useState(9);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [sidebarPromo, setSidebarPromo] = useState<Promotion>(sidebarPromoDefault);
 
   useEffect(() => {
     const loadData = async () => {
-      const [productsData, categoriesData] = await Promise.all([
+      const [productsData, categoriesData, promotions] = await Promise.all([
         fetchProducts(),
         fetchCategories(),
+        fetchPromotions(),
       ]);
       setProducts(productsData);
       setCategories(categoriesData);
+      if (promotions.menu_sidebar) setSidebarPromo(promotions.menu_sidebar);
     };
     loadData();
   }, []);
@@ -198,9 +215,15 @@ function MenuContent() {
 
           <div className="relative overflow-hidden rounded-3xl bg-secondary p-8 text-white">
             <div className="relative z-10">
-              <p className="font-label-bold text-label-bold mb-2">Weekly Special</p>
-              <h4 className="font-heading text-headline-md mb-4 leading-tight">Free Delivery on orders over ₵200</h4>
-              <button className="bg-white text-secondary px-6 py-2 rounded-full font-label-bold text-label-bold">Order Now</button>
+              {sidebarPromo.eyebrow && (
+                <p className="font-label-bold text-label-bold mb-2">{sidebarPromo.eyebrow}</p>
+              )}
+              <h4 className="font-heading text-headline-md mb-4 leading-tight">{sidebarPromo.headline}</h4>
+              {sidebarPromo.primary_label && (
+                <Link href={sidebarPromo.primary_url || "/menu"} className="inline-block bg-white text-secondary px-6 py-2 rounded-full font-label-bold text-label-bold">
+                  {sidebarPromo.primary_label}
+                </Link>
+              )}
             </div>
             <span className="material-symbols-outlined absolute -bottom-6 -right-6 text-9xl opacity-10 rotate-12">local_shipping</span>
           </div>

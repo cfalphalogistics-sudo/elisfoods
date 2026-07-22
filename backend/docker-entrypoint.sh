@@ -18,6 +18,7 @@ exit($hasAdmin ? 0 : 1);
 
 # Ensure Filament assets are published and caches are fresh
 php /var/www/html/artisan filament:assets
+php /var/www/html/artisan storage:link || true
 php /var/www/html/artisan optimize
 
 # Start Apache in the foreground
