@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StoreSetting;
+use App\Models\User;
+use Filament\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -94,8 +98,36 @@ class OrderController extends Controller
                 ]);
             }
 
+            $this->notifyAdmins($order);
+
             return response()->json($order->load('items'), 201);
         });
+    }
+
+    private function notifyAdmins(Order $order): void
+    {
+        try {
+            $itemsCount = collect($order->items ?? [])->count() ?: $order->items()->count();
+            $total = 'GH₵ ' . number_format($order->total / 100, 2);
+
+            Notification::make()
+                ->title("New order {$order->reference}")
+                ->body("{$order->customer_name} · {$itemsCount} item(s) · {$total} · " . ucfirst($order->method))
+                ->icon('heroicon-o-shopping-bag')
+                ->iconColor('primary')
+                ->actions([
+                    NotificationAction::make('view')
+                        ->label('View order')
+                        ->url("/admin/orders/{$order->id}")
+                        ->markAsRead(),
+                ])
+                ->sendToDatabase(User::all());
+        } catch (\Throwable $e) {
+            Log::warning('Admin new-order notification failed', [
+                'order' => $order->reference,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function show(string $reference): JsonResponse

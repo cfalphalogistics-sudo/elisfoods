@@ -48,6 +48,8 @@ services:
         value: stderr
       - key: SESSION_DRIVER
         value: database
+      - key: QUEUE_CONNECTION
+        value: sync
       - key: SESSION_SECURE_COOKIE
         value: "true"
       - key: BCRYPT_ROUNDS

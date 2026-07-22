@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatPrice, storeSettings } from "@/lib/data";
 import { useOrders, type Order } from "@/contexts/OrderContext";
-import { statusLabel, statusIcon } from "@/lib/services/orderService";
+import { statusLabel, statusIcon, fetchOrderByReference } from "@/lib/services/orderService";
+
+const POLL_INTERVAL_MS = 30_000;
 
 const allStatuses = [
   { id: "placed", label: "Order Placed", icon: "receipt" },
-  { id: "confirmed", label: "Payment Confirmed", icon: "payments" },
-  { id: "accepted", label: "Order Accepted", icon: "check_circle" },
+  { id: "confirmed", label: "Order Confirmed", icon: "check_circle" },
   { id: "preparing", label: "Preparing your food", icon: "skillet" },
-  { id: "ready", label: "Ready for pickup", icon: "inventory_2" },
   { id: "dispatched", label: "Out for delivery", icon: "local_shipping" },
   { id: "delivered", label: "Delivered", icon: "done_all" },
 ];
@@ -22,32 +22,46 @@ function TrackContent() {
   const { getOrderByReference } = useOrders();
   const [orderNumber, setOrderNumber] = useState(initialRef);
   const [phone, setPhone] = useState("");
-  const [submitted, setSubmitted] = useState(Boolean(initialRef));
-  const [order, setOrder] = useState<Order | null>(getOrderByReference(initialRef) || null);
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [order, setOrder] = useState<Order | null>(null);
+
+  const lookupOrder = useCallback(
+    async (reference: string) => {
+      if (!reference.trim()) return;
+      setLoading(true);
+      const fromApi = await fetchOrderByReference(reference);
+      setOrder(fromApi ?? getOrderByReference(reference) ?? null);
+      setSubmitted(true);
+      setLoading(false);
+    },
+    [getOrderByReference]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const found = getOrderByReference(orderNumber);
-    setOrder(found ?? null);
-    setSubmitted(true);
+    void lookupOrder(orderNumber);
   };
 
-  const statusIndex = order ? allStatuses.findIndex((s) => s.id === order.status) : -1;
-  const currentIndex = Math.max(0, statusIndex);
-
+  // Auto-lookup when arriving with ?ref=...
   useEffect(() => {
-    if (!submitted || !order) return;
-    const timer = setInterval(() => {
-      // In a real app the status comes from the backend; this is a local demo progression.
-      setOrder((prev) => {
-        if (!prev) return prev;
-        const idx = allStatuses.findIndex((s) => s.id === prev.status);
-        const next = allStatuses[idx + 1];
-        return next && next.id !== "cancelled" ? { ...prev, status: next.id as Order["status"] } : prev;
-      });
-    }, 4000);
+    if (initialRef) void lookupOrder(initialRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialRef]);
+
+  // Poll the API so status changes appear live while the page is open.
+  useEffect(() => {
+    if (!submitted || !order || order.status === "delivered" || order.status === "cancelled") return;
+    const timer = setInterval(async () => {
+      const fresh = await fetchOrderByReference(order.reference);
+      if (fresh) setOrder(fresh);
+    }, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [submitted, order]);
+
+  const isCancelled = order?.status === "cancelled";
+  const statusIndex = order ? allStatuses.findIndex((s) => s.id === order.status) : -1;
+  const currentIndex = Math.max(0, statusIndex);
 
   return (
     <main className="max-w-[1440px] mx-auto px-container-mobile md:px-container-desktop py-stack-md pb-32">
@@ -66,7 +80,9 @@ function TrackContent() {
             <label className="block text-label-sm font-label-bold text-on-surface-variant mb-1">Phone Number</label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-surface-container-low rounded-xl p-3 border-none focus:ring-2 focus:ring-primary font-body-md" placeholder="024 987 5848" />
           </div>
-          <button type="submit" className="w-full py-4 bg-primary text-white rounded-full font-label-bold text-label-bold shadow-lg hover:bg-primary/90 transition-all">Track Order</button>
+          <button type="submit" disabled={loading} className="w-full py-4 bg-primary text-white rounded-full font-label-bold text-label-bold shadow-lg hover:bg-primary/90 transition-all disabled:opacity-60">
+            {loading ? "Looking up your order..." : "Track Order"}
+          </button>
         </form>
       ) : (
         <div className="max-w-3xl mx-auto">
@@ -101,26 +117,42 @@ function TrackContent() {
 
           <div className="bg-surface rounded-3xl p-6 shadow-card">
             <h2 className="font-heading text-headline-md mb-6">Order Timeline</h2>
-            <div className="relative">
-              <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-surface-container-highest" />
-              {allStatuses.map((status, idx) => {
-                const active = idx <= currentIndex;
-                const current = idx === currentIndex;
-                return (
-                  <div key={status.id} className="relative flex items-start gap-4 mb-6 last:mb-0">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shrink-0 ${active ? "bg-primary text-white" : "bg-surface-container-high text-on-surface-variant"}`}>
-                      <span className="material-symbols-outlined text-sm">{status.icon}</span>
+            {isCancelled ? (
+              <div className="flex items-start gap-4 bg-error/10 rounded-2xl p-4">
+                <span className="material-symbols-outlined text-error">cancel</span>
+                <div>
+                  <p className="font-label-bold text-label-bold text-error">This order was cancelled</p>
+                  <p className="text-on-surface-variant text-label-sm mt-1">
+                    If this is unexpected, call us or reach out on WhatsApp and we&apos;ll sort it out.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-surface-container-highest" />
+                {allStatuses.map((status, idx) => {
+                  const active = idx <= currentIndex;
+                  const current = idx === currentIndex;
+                  return (
+                    <div key={status.id} className="relative flex items-start gap-4 mb-6 last:mb-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shrink-0 ${active ? "bg-primary text-white" : "bg-surface-container-high text-on-surface-variant"}`}>
+                        <span className="material-symbols-outlined text-sm">{status.icon}</span>
+                      </div>
+                      <div>
+                        <p className={`font-label-bold text-label-bold ${current ? "text-primary" : active ? "text-on-surface" : "text-on-surface-variant"}`}>
+                          {status.label}
+                        </p>
+                        {current && status.id !== "delivered" && (
+                          <p className="text-on-surface-variant text-label-sm">
+                            Status updates automatically — no need to refresh.
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className={`font-label-bold text-label-bold ${current ? "text-primary" : active ? "text-on-surface" : "text-on-surface-variant"}`}>
-                        {status.label}
-                      </p>
-                      {current && <p className="text-on-surface-variant text-label-sm">Your food is being prepared now.</p>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mt-6 justify-center">

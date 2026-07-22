@@ -128,6 +128,14 @@ class OrdersTable
             ])
             ->actions([
                 ViewAction::make(),
+                Action::make('whatsapp')
+                    ->label('WhatsApp')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('success')
+                    ->url(fn (Order $record): ?string => $record->whatsappUrl())
+                    ->openUrlInNewTab()
+                    ->visible(fn (Order $record): bool => $record->whatsappUrl() !== null)
+                    ->tooltip('Send status update via WhatsApp'),
                 Action::make('markPreparing')
                     ->label('Prepare')
                     ->icon('heroicon-o-fire')
