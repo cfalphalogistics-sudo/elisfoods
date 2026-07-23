@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\SmsOnlineGhService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
@@ -21,9 +22,30 @@ class AuthController extends Controller
             'phone' => 'required|string',
         ]);
 
+        $ip = $request->ip();
         $formattedPhone = SmsOnlineGhService::formatPhone($request->input('phone'));
 
-        // Check rate limit: 1 request per 45 seconds
+        // 1. IP-based Rate Limiting: Max 3 requests per 10 minutes per IP
+        $ipKey = 'send-otp-ip:' . $ip;
+        if (RateLimiter::tooManyAttempts($ipKey, 3)) {
+            $seconds = RateLimiter::availableIn($ipKey);
+            return response()->json([
+                'success' => false,
+                'message' => "Too many verification requests from your device. Please try again in " . ceil($seconds / 60) . " minute(s).",
+            ], 429);
+        }
+
+        // 2. Phone-based Rate Limiting: Max 5 requests per hour per Phone
+        $phoneKey = 'send-otp-phone:' . $formattedPhone;
+        if (RateLimiter::tooManyAttempts($phoneKey, 5)) {
+            $seconds = RateLimiter::availableIn($phoneKey);
+            return response()->json([
+                'success' => false,
+                'message' => "Too many verification requests for this phone number. Please try again in " . ceil($seconds / 60) . " minute(s).",
+            ], 429);
+        }
+
+        // 3. Short Cooldown: 45 seconds between requests for the same phone
         $recentOtp = Otp::where('phone', $formattedPhone)
             ->where('created_at', '>', now()->subSeconds(45))
             ->first();
@@ -31,9 +53,21 @@ class AuthController extends Controller
         if ($recentOtp) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please wait 45 seconds before requesting another code.',
+                'message' => 'Please wait 45 seconds before requesting another verification code.',
             ], 429);
         }
+
+        // 4. Global Daily Circuit Breaker: Check if system daily SMS limit reached
+        if ($this->smsService->isDailyLimitReached()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'System daily SMS dispatch limit reached. Please try logging in later or contact store support.',
+            ], 429);
+        }
+
+        // Increment rate limit counters
+        RateLimiter::hit($ipKey, 600); // 10 minutes
+        RateLimiter::hit($phoneKey, 3600); // 1 hour
 
         // Generate 6-digit numeric OTP
         $code = sprintf('%06d', random_int(100000, 999999));
@@ -46,14 +80,16 @@ class AuthController extends Controller
         ]);
 
         $message = "Your Eli's Food verification code is {$code}. It is valid for 10 minutes. Do not share this code.";
-        $sent = $this->smsService->sendSms($formattedPhone, $message);
+        $this->smsService->sendSms($formattedPhone, $message);
+
+        $apiKey = SmsOnlineGhService::getApiKey();
 
         return response()->json([
             'success' => true,
             'message' => 'Verification code sent successfully.',
             'phone' => $formattedPhone,
-            // Include OTP in debug mode / log fallback for easy testing
-            'debug_code' => config('app.debug') || empty(env('SMSONLINEGH_API_KEY')) ? $code : null,
+            // Include OTP in debug mode or when API key is missing
+            'debug_code' => config('app.debug') || empty($apiKey) ? $code : null,
         ]);
     }
 
@@ -82,6 +118,9 @@ class AuthController extends Controller
         }
 
         $otpRecord->update(['verified' => true]);
+
+        // Clear phone rate limiter on successful verification
+        RateLimiter::clear('send-otp-phone:' . $formattedPhone);
 
         // Find existing user by phone or create new customer
         $user = User::where('phone', $formattedPhone)->first();

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\StoreSetting;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -27,18 +29,143 @@ class SmsOnlineGhService
     }
 
     /**
+     * Get decrypted API Key from StoreSetting or fallback to env.
+     */
+    public static function getApiKey(): ?string
+    {
+        $rawKey = StoreSetting::get('sms_api_key');
+
+        if (! empty($rawKey)) {
+            try {
+                return Crypt::decryptString($rawKey);
+            } catch (\Throwable) {
+                // Return raw key if not encrypted (backwards compatibility)
+                return $rawKey;
+            }
+        }
+
+        return config('services.smsonlinegh.key', env('SMSONLINEGH_API_KEY'));
+    }
+
+    /**
+     * Get Sender ID from StoreSetting or fallback to env.
+     */
+    public static function getSenderId(): string
+    {
+        $sender = StoreSetting::get('sms_sender_id');
+
+        return ! empty($sender) ? $sender : config('services.smsonlinegh.sender', env('SMSONLINEGH_SENDER_ID', 'ELIS FOODS'));
+    }
+
+    /**
+     * Get Daily SMS Limit from StoreSetting (default 100).
+     */
+    public static function getDailyLimit(): int
+    {
+        return (int) StoreSetting::get('sms_daily_limit', 100);
+    }
+
+    /**
+     * Get count of SMS sent today.
+     */
+    public function getDailySentCount(): int
+    {
+        $key = 'sms_daily_count_' . date('Y-m-d');
+        return (int) Cache::get($key, 0);
+    }
+
+    /**
+     * Check if daily limit of sent SMS has been reached.
+     */
+    public function isDailyLimitReached(): bool
+    {
+        $limit = self::getDailyLimit();
+        if ($limit <= 0) {
+            return false; // Unlimited if set to 0
+        }
+        return $this->getDailySentCount() >= $limit;
+    }
+
+    /**
+     * Increment daily SMS count.
+     */
+    protected function incrementDailySentCount(): void
+    {
+        $key = 'sms_daily_count_' . date('Y-m-d');
+        if (Cache::has($key)) {
+            Cache::increment($key);
+        } else {
+            Cache::put($key, 1, now()->endOfDay());
+        }
+    }
+
+    /**
+     * Check SMSOnlineGH balance live from API.
+     */
+    public function getBalance(): array
+    {
+        $apiKey = self::getApiKey();
+
+        if (empty($apiKey)) {
+            return [
+                'success' => false,
+                'message' => 'No SMSOnlineGH API key is configured. Please enter your API key first.',
+            ];
+        }
+
+        try {
+            $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v4/reports/balance', [
+                'key' => $apiKey,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $credit = $data['credit'] ?? $data['balance'] ?? $data['response'] ?? null;
+
+                if ($credit !== null) {
+                    return [
+                        'success' => true,
+                        'credit' => $credit,
+                        'message' => "Current SMS Credit Balance: {$credit}",
+                    ];
+                }
+
+                return [
+                    'success' => true,
+                    'raw' => $response->body(),
+                    'message' => "API Response: {$response->body()}",
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => "Balance check failed: Status {$response->status()} - {$response->body()}",
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'message' => "Exception checking balance: {$e->getMessage()}",
+            ];
+        }
+    }
+
+    /**
      * Send SMS using SMSOnlineGH API v4.
      */
     public function sendSms(string $phone, string $message): bool
     {
-        $formattedPhone = self::formatPhone($phone);
+        if ($this->isDailyLimitReached()) {
+            Log::warning("SMSOnlineGH Aborted: Daily safety limit of {$this->getDailyLimit()} SMS reached.");
+            return false;
+        }
 
-        // Check StoreSetting first (Admin UI), fallback to .env config
-        $apiKey = StoreSetting::get('sms_api_key') ?: config('services.smsonlinegh.key', env('SMSONLINEGH_API_KEY'));
-        $senderId = StoreSetting::get('sms_sender_id') ?: config('services.smsonlinegh.sender', env('SMSONLINEGH_SENDER_ID', 'ELIS FOODS'));
+        $formattedPhone = self::formatPhone($phone);
+        $apiKey = self::getApiKey();
+        $senderId = self::getSenderId();
 
         if (empty($apiKey)) {
             Log::info("SMSOnlineGH (Log Fallback - No API Key Set) - To: {$formattedPhone} | Message: {$message}");
+            $this->incrementDailySentCount();
             return true;
         }
 
@@ -52,6 +179,7 @@ class SmsOnlineGhService
 
             if ($response->successful()) {
                 Log::info("SMSOnlineGH Sent to {$formattedPhone}: {$response->body()}");
+                $this->incrementDailySentCount();
                 return true;
             }
 

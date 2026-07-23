@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\StoreSetting;
+use App\Services\SmsOnlineGhService;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Crypt;
 use UnitEnum;
 
 class ManageStoreSettings extends Page
@@ -41,6 +43,8 @@ class ManageStoreSettings extends Page
 
     protected function fillForm(): void
     {
+        $apiKey = SmsOnlineGhService::getApiKey();
+
         $this->form->fill([
             'phone' => StoreSetting::get('phone', ''),
             'whatsapp' => StoreSetting::get('whatsapp', ''),
@@ -54,8 +58,9 @@ class ManageStoreSettings extends Page
             'is_open' => filter_var(StoreSetting::get('is_open', 'true'), FILTER_VALIDATE_BOOLEAN),
             'payment_methods' => json_decode(StoreSetting::get('payment_methods', '[]'), true) ?: ['hubtel', 'cash', 'whatsapp'],
             'pickup_location' => StoreSetting::get('pickup_location', "Eli's Food Kitchen, Accra"),
-            'sms_api_key' => StoreSetting::get('sms_api_key', ''),
+            'sms_api_key' => $apiKey ?: '',
             'sms_sender_id' => StoreSetting::get('sms_sender_id', 'ELIS FOODS'),
+            'sms_daily_limit' => (int) StoreSetting::get('sms_daily_limit', 100),
         ]);
     }
 
@@ -79,19 +84,25 @@ class ManageStoreSettings extends Page
                     ]),
 
                 Section::make('SMS & OTP Settings (SMSOnlineGH)')
-                    ->description('Configure your SMSOnlineGH gateway credentials for sending login verification codes.')
-                    ->columns(2)
+                    ->description('Configure your SMSOnlineGH gateway credentials and safety rate limits.')
+                    ->columns(3)
                     ->schema([
                         \Filament\Forms\Components\TextInput::make('sms_api_key')
                             ->label('SMSOnlineGH API Key')
                             ->password()
                             ->revealable()
-                            ->placeholder('Enter your SMSOnlineGH API key'),
+                            ->placeholder('Enter your SMSOnlineGH API key')
+                            ->helperText('Stored securely with AES-256 encryption.'),
                         \Filament\Forms\Components\TextInput::make('sms_sender_id')
                             ->label('SMS Sender ID')
                             ->placeholder('ELIS FOODS')
                             ->maxLength(11)
-                            ->helperText('Maximum 11 characters, e.g. ELIS FOODS'),
+                            ->helperText('Maximum 11 characters'),
+                        \Filament\Forms\Components\TextInput::make('sms_daily_limit')
+                            ->label('Daily System SMS Limit')
+                            ->numeric()
+                            ->default(100)
+                            ->helperText('Maximum SMS sent per day system-wide (0 for unlimited)'),
                     ]),
 
                 Section::make('Social links')
@@ -158,12 +169,41 @@ class ManageStoreSettings extends Page
             ]);
     }
 
+    public function checkSmsBalance(): void
+    {
+        $smsService = app(SmsOnlineGhService::class);
+        $result = $smsService->getBalance();
+        $dailySent = $smsService->getDailySentCount();
+        $dailyLimit = SmsOnlineGhService::getDailyLimit();
+
+        if ($result['success']) {
+            Notification::make()
+                ->success()
+                ->title('SMSOnlineGH Balance')
+                ->body("{$result['message']}\nToday's SMS dispatches: {$dailySent} / " . ($dailyLimit > 0 ? $dailyLimit : 'Unlimited'))
+                ->send();
+        } else {
+            Notification::make()
+                ->warning()
+                ->title('SMS Balance Check Failed')
+                ->body($result['message'])
+                ->send();
+        }
+    }
+
     public function save(): void
     {
         $data = $this->form->getState();
 
         foreach ($data as $key => $value) {
-            if (is_array($value)) {
+            if ($key === 'sms_api_key') {
+                if (! empty($value)) {
+                    // Encrypt API Key before storing in database
+                    $value = Crypt::encryptString($value);
+                } else {
+                    $value = '';
+                }
+            } elseif (is_array($value)) {
                 $value = json_encode($value);
             } elseif (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
@@ -195,6 +235,17 @@ class ManageStoreSettings extends Page
     public function getTitle(): string | Htmlable
     {
         return 'Store Settings';
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('checkSmsBalance')
+                ->label('Check SMS Balance')
+                ->icon(Heroicon::OutlinedChatBubbleLeftRight)
+                ->color('info')
+                ->action('checkSmsBalance'),
+        ];
     }
 
     public function content(Schema $schema): Schema
