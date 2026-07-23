@@ -114,36 +114,51 @@ class SmsOnlineGhService
         }
 
         try {
-            $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v4/reports/balance', [
+            $response = Http::get('https://api.smsonlinegh.com/v4/reports/balance', [
                 'key' => $apiKey,
             ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $code = $data['handshake']['code'] ?? null;
+            if (! $response->successful()) {
+                $response = Http::get('https://smsonlinegh.com/app/sms/api', [
+                    'action' => 'get-balance',
+                    'key' => $apiKey,
+                ]);
+            }
 
+            $rawBody = trim($response->body());
+            $jsonData = $response->json();
+
+            // 1. Plain numeric balance response (e.g. "150.50")
+            if (is_numeric($rawBody)) {
+                return [
+                    'success' => true,
+                    'credit' => $rawBody,
+                    'message' => "Current SMS Credit Balance: {$rawBody} Credits",
+                ];
+            }
+
+            // 2. Structured JSON response
+            if (is_array($jsonData)) {
+                $code = $jsonData['handshake']['code'] ?? null;
                 if ($code !== null && (int) $code !== 1000) {
-                    $desc = $data['handshake']['description'] ?? 'API authentication error';
+                    $desc = $jsonData['handshake']['description'] ?? 'API authentication error';
                     return [
                         'success' => false,
                         'message' => "SMSOnlineGH Error (Code {$code}): {$desc}",
                     ];
                 }
 
-                // Extract credit from all possible SMSOnlineGH API response structures
                 $credit = null;
-                if (isset($data['data']['credit'])) {
-                    $credit = $data['data']['credit'];
-                } elseif (isset($data['data']['balance'])) {
-                    $credit = $data['data']['balance'];
-                } elseif (isset($data['credit'])) {
-                    $credit = $data['credit'];
-                } elseif (isset($data['balance'])) {
-                    $credit = $data['balance'];
-                } elseif (isset($data['data']) && (is_numeric($data['data']) || is_string($data['data']))) {
-                    $credit = $data['data'];
-                } elseif (isset($data['data'][0]['credit'])) {
-                    $credit = $data['data'][0]['credit'];
+                if (isset($jsonData['data']['credit'])) {
+                    $credit = $jsonData['data']['credit'];
+                } elseif (isset($jsonData['data']['balance'])) {
+                    $credit = $jsonData['data']['balance'];
+                } elseif (isset($jsonData['credit'])) {
+                    $credit = $jsonData['credit'];
+                } elseif (isset($jsonData['balance'])) {
+                    $credit = $jsonData['balance'];
+                } elseif (isset($jsonData['data']) && (is_numeric($jsonData['data']) || is_string($jsonData['data']))) {
+                    $credit = $jsonData['data'];
                 }
 
                 if ($credit !== null) {
@@ -153,18 +168,20 @@ class SmsOnlineGhService
                         'message' => "Current SMS Credit Balance: {$credit} Credits",
                     ];
                 }
+            }
 
-                $jsonDetails = json_encode($data);
+            // 3. Fallback raw body string
+            if (! empty($rawBody)) {
                 return [
                     'success' => true,
-                    'raw' => $jsonDetails,
-                    'message' => "API Connection Successful! Response: {$jsonDetails}",
+                    'credit' => $rawBody,
+                    'message' => "Current SMS Credit Balance: {$rawBody}",
                 ];
             }
 
             return [
                 'success' => false,
-                'message' => "Balance check failed: Status {$response->status()} - {$response->body()}",
+                'message' => "Unable to parse balance from SMSOnlineGH response.",
             ];
         } catch (\Throwable $e) {
             return [
