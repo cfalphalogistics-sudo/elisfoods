@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\StoreSetting;
 use App\Models\User;
+use App\Services\SmsOnlineGhService;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Illuminate\Http\JsonResponse;
@@ -54,13 +55,26 @@ class OrderController extends Controller
             'coupon_code' => 'nullable|string',
         ]);
 
-        return DB::transaction(function () use ($validated) {
+        return DB::transaction(function () use ($request, $validated) {
             $reference = $this->generateReference();
+            $formattedPhone = SmsOnlineGhService::formatPhone($validated['customer']['phone']);
+
+            // Associate order with user if authenticated or by phone matching
+            $userId = null;
+            if ($request->user()) {
+                $userId = $request->user()->id;
+            } else {
+                $matchingUser = User::where('phone', $formattedPhone)->first();
+                if ($matchingUser) {
+                    $userId = $matchingUser->id;
+                }
+            }
 
             $order = Order::create([
+                'user_id' => $userId,
                 'reference' => $reference,
                 'customer_name' => $validated['customer']['name'],
-                'phone' => $validated['customer']['phone'],
+                'phone' => $formattedPhone,
                 'alt_phone' => $validated['customer']['alt_phone'] ?? null,
                 'email' => $validated['customer']['email'] ?? null,
                 'method' => $validated['customer']['method'],
@@ -102,6 +116,24 @@ class OrderController extends Controller
 
             return response()->json($order->load('items'), 201);
         });
+    }
+
+    public function userOrders(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $orders = Order::with('items')
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('phone', $user->phone);
+            })
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'orders' => $orders,
+        ]);
     }
 
     private function notifyAdmins(Order $order): void

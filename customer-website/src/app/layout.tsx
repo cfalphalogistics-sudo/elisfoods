@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { OrderProvider } from "@/contexts/OrderContext";
 import { ToastProvider } from "@/contexts/ToastContext";
@@ -31,15 +32,17 @@ export default function RootLayout({
       <body className="antialiased bg-background text-foreground font-body min-h-screen flex flex-col">
         <StoreSettingsProvider>
           <ToastProvider>
-            <OrderProvider>
-              <CartProvider>
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-                <MobileNav />
-                <WhatsAppButton />
-              </CartProvider>
-            </OrderProvider>
+            <AuthProvider>
+              <OrderProvider>
+                <CartProvider>
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                  <MobileNav />
+                  <WhatsAppButton />
+                </CartProvider>
+              </OrderProvider>
+            </AuthProvider>
           </ToastProvider>
         </StoreSettingsProvider>
       </body>

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatPrice } from "@/lib/data";
 import { fetchDeliveryAreas, fetchStoreSettings } from "@/lib/services/storeService";
+import type { UserAddress } from "@/lib/services/authService";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -31,6 +33,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const whatsappMode = searchParams.get("whatsapp") === "1";
   const { items, subtotal, addOnsTotal, packagingFee, deliveryFee, discount, total, customer, setCustomer, deliveryArea, setDeliveryArea, isHydrated } = useCart();
+  const { user, addresses, isLoggedIn } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState<string>("hubtel");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -38,6 +41,7 @@ function CheckoutContent() {
   const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
   const [storeSettings, setStoreSettings] = useState<StoreSetting | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -67,28 +71,35 @@ function CheckoutContent() {
     }
   }, [storeSettings, whatsappMode, paymentMethod]);
 
-  // Load saved customer details once
+  const applySavedAddress = useCallback(
+    (addr: UserAddress) => {
+      setSelectedAddressId(addr.id);
+      setCustomer({
+        address: addr.address,
+        ghanaPostGps: addr.ghana_post_gps || "",
+        landmark: addr.landmark || "",
+        deliveryInstructions: addr.delivery_instructions || "",
+      });
+    },
+    [setCustomer]
+  );
+
+  // Pre-fill user info if logged in
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("elis-customer");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setCustomer(parsed);
+    if (isLoggedIn && user) {
+      setCustomer({
+        name: customer.name || user.name || "",
+        phone: customer.phone || user.phone || "",
+        email: customer.email || user.email || "",
+      });
+
+      const defaultAddr = addresses.find((a) => a.is_default) || addresses[0];
+      if (defaultAddr && !customer.address) {
+        applySavedAddress(defaultAddr);
       }
-    } catch {
-      // ignore parse errors
     }
-  }, [setCustomer]);
+  }, [isLoggedIn, user, addresses, customer.name, customer.phone, customer.email, customer.address, setCustomer, applySavedAddress]);
 
-  // Save customer details as they change
-  useEffect(() => {
-    localStorage.setItem("elis-customer", JSON.stringify(customer));
-  }, [customer]);
-
-  // Wait for CartContext to finish loading the real cart from localStorage
-  // (isHydrated) before deciding it's empty — otherwise this can flash "Your
-  // cart is empty" for a frame even when the customer has items, since child
-  // effects (mounted=true) fire before CartProvider's own hydration effect.
   if (!mounted || !isHydrated) {
     return (
       <main className="max-w-[1440px] mx-auto px-container-mobile md:px-container-desktop py-stack-lg text-center pb-32">
@@ -113,7 +124,7 @@ function CheckoutContent() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    // Simulate processing
+
     setTimeout(() => {
       setLoading(false);
       router.push("/order-confirmation?method=" + paymentMethod);
@@ -135,7 +146,9 @@ function CheckoutContent() {
       <div className="flex flex-col lg:flex-row gap-gutter items-start">
         <form onSubmit={handleSubmit} className="flex-1 space-y-stack-md w-full">
           <section className="bg-surface rounded-3xl p-6 shadow-card">
-            <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-primary">person</span> Customer Information</h2>
+            <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">person</span> Customer Information
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-label-sm font-label-bold text-on-surface-variant mb-1">Full Name *</label>
@@ -159,7 +172,9 @@ function CheckoutContent() {
           </section>
 
           <section className="bg-surface rounded-3xl p-6 shadow-card">
-            <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-primary">local_shipping</span> Fulfilment Method</h2>
+            <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">local_shipping</span> Fulfilment Method
+            </h2>
             <div className="flex gap-2 mb-4">
               {(["delivery", "pickup"] as const).map((m) => (
                 <button
@@ -174,8 +189,35 @@ function CheckoutContent() {
                 </button>
               ))}
             </div>
+
             {customer.method === "delivery" && (
               <div className="space-y-4">
+                {isLoggedIn && addresses.length > 0 && (
+                  <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/40">
+                    <label className="block text-xs font-bold text-on-surface-variant mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm text-primary">bookmark</span>
+                      Use Saved Address:
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {addresses.map((addr) => (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => applySavedAddress(addr)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1 ${
+                            selectedAddressId === addr.id
+                              ? "bg-primary text-white border-primary shadow-sm"
+                              : "bg-surface text-on-surface border-outline-variant hover:border-primary"
+                          }`}
+                        >
+                          <span>{addr.label}</span>
+                          {addr.is_default && <span className="text-[10px] opacity-80">(Default)</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-label-sm font-label-bold text-on-surface-variant mb-1">Delivery Area</label>
                   <select value={deliveryArea} onChange={(e) => setDeliveryArea(e.target.value)} className="w-full bg-surface-container-low rounded-xl p-3 border-none focus:ring-2 focus:ring-primary font-body-md">
@@ -205,7 +247,7 @@ function CheckoutContent() {
             {customer.method === "pickup" && (
               <div className="p-4 bg-tertiary/10 text-tertiary rounded-2xl">
                 <p className="font-label-bold">Pickup Location</p>
-                <p className="text-body-md">{storeSettings?.pickup_location ?? "Eli's Food Kitchen, Accra"}</p>
+                <p className="text-body-md">{storeSettings?.pickup_location ?? "Eli's Food Kitchen, Lashibi, Accra"}</p>
                 {storeSettings && <p className="text-label-sm">Opening hours: {storeSettings.hours_open} — {storeSettings.hours_close}</p>}
               </div>
             )}
@@ -223,7 +265,9 @@ function CheckoutContent() {
           </section>
 
           <section className="bg-surface rounded-3xl p-6 shadow-card">
-            <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-primary">payments</span> Payment Method</h2>
+            <h2 className="font-heading text-headline-md mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">payments</span> Payment Method
+            </h2>
             <div className="space-y-3">
               {(storeSettings?.payment_methods ?? ["hubtel", "cash", "whatsapp"]).map((method) => {
                 const label = {

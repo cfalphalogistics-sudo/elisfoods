@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 class Order extends Model
 {
     protected $fillable = [
-        'reference', 'customer_name', 'phone', 'alt_phone', 'email', 'method',
+        'user_id', 'reference', 'customer_name', 'phone', 'alt_phone', 'email', 'method',
         'address', 'ghana_post_gps', 'landmark', 'delivery_instructions',
         'delivery_area_id', 'preferred_time', 'payment_method', 'status',
         'subtotal', 'add_ons_total', 'packaging_fee', 'delivery_fee', 'discount',
@@ -45,6 +45,11 @@ class Order extends Model
                 ]);
             }
         });
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function items(): HasMany
