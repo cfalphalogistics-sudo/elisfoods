@@ -54,6 +54,8 @@ class ManageStoreSettings extends Page
             'is_open' => filter_var(StoreSetting::get('is_open', 'true'), FILTER_VALIDATE_BOOLEAN),
             'payment_methods' => json_decode(StoreSetting::get('payment_methods', '[]'), true) ?: ['hubtel', 'cash', 'whatsapp'],
             'pickup_location' => StoreSetting::get('pickup_location', "Eli's Food Kitchen, Accra"),
+            'sms_api_key' => StoreSetting::get('sms_api_key', ''),
+            'sms_sender_id' => StoreSetting::get('sms_sender_id', 'ELIS FOODS'),
         ]);
     }
 
@@ -74,6 +76,22 @@ class ManageStoreSettings extends Page
                         \Filament\Forms\Components\TextInput::make('email')
                             ->email()
                             ->required(),
+                    ]),
+
+                Section::make('SMS & OTP Settings (SMSOnlineGH)')
+                    ->description('Configure your SMSOnlineGH gateway credentials for sending login verification codes.')
+                    ->columns(2)
+                    ->schema([
+                        \Filament\Forms\Components\TextInput::make('sms_api_key')
+                            ->label('SMSOnlineGH API Key')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Enter your SMSOnlineGH API key'),
+                        \Filament\Forms\Components\TextInput::make('sms_sender_id')
+                            ->label('SMS Sender ID')
+                            ->placeholder('ELIS FOODS')
+                            ->maxLength(11)
+                            ->helperText('Maximum 11 characters, e.g. ELIS FOODS'),
                     ]),
 
                 Section::make('Social links')

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\StoreSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -31,11 +32,13 @@ class SmsOnlineGhService
     public function sendSms(string $phone, string $message): bool
     {
         $formattedPhone = self::formatPhone($phone);
-        $apiKey = config('services.smsonlinegh.key', env('SMSONLINEGH_API_KEY'));
-        $senderId = config('services.smsonlinegh.sender', env('SMSONLINEGH_SENDER_ID', 'ELIS FOODS'));
+
+        // Check StoreSetting first (Admin UI), fallback to .env config
+        $apiKey = StoreSetting::get('sms_api_key') ?: config('services.smsonlinegh.key', env('SMSONLINEGH_API_KEY'));
+        $senderId = StoreSetting::get('sms_sender_id') ?: config('services.smsonlinegh.sender', env('SMSONLINEGH_SENDER_ID', 'ELIS FOODS'));
 
         if (empty($apiKey)) {
-            Log::info("SMSOnlineGH (Log Fallback) - To: {$formattedPhone} | Message: {$message}");
+            Log::info("SMSOnlineGH (Log Fallback - No API Key Set) - To: {$formattedPhone} | Message: {$message}");
             return true;
         }
 
