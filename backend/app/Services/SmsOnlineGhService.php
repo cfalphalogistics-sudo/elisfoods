@@ -130,20 +130,35 @@ class SmsOnlineGhService
                     ];
                 }
 
-                $credit = $data['credit'] ?? $data['balance'] ?? $data['data']['credit'] ?? null;
+                // Extract credit from all possible SMSOnlineGH API response structures
+                $credit = null;
+                if (isset($data['data']['credit'])) {
+                    $credit = $data['data']['credit'];
+                } elseif (isset($data['data']['balance'])) {
+                    $credit = $data['data']['balance'];
+                } elseif (isset($data['credit'])) {
+                    $credit = $data['credit'];
+                } elseif (isset($data['balance'])) {
+                    $credit = $data['balance'];
+                } elseif (isset($data['data']) && (is_numeric($data['data']) || is_string($data['data']))) {
+                    $credit = $data['data'];
+                } elseif (isset($data['data'][0]['credit'])) {
+                    $credit = $data['data'][0]['credit'];
+                }
 
                 if ($credit !== null) {
                     return [
                         'success' => true,
                         'credit' => $credit,
-                        'message' => "Current SMS Credit Balance: {$credit}",
+                        'message' => "Current SMS Credit Balance: {$credit} Credits",
                     ];
                 }
 
+                $jsonDetails = json_encode($data);
                 return [
                     'success' => true,
-                    'raw' => $response->body(),
-                    'message' => "API Connection Successful: {$response->body()}",
+                    'raw' => $jsonDetails,
+                    'message' => "API Connection Successful! Response: {$jsonDetails}",
                 ];
             }
 
