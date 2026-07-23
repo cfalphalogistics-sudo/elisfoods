@@ -114,30 +114,21 @@ class SmsOnlineGhService
         }
 
         try {
-            $response = Http::get('https://api.smsonlinegh.com/v4/reports/balance', [
+            $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v4/reports/balance', [
                 'key' => $apiKey,
             ]);
 
             if (! $response->successful()) {
-                $response = Http::get('https://smsonlinegh.com/app/sms/api', [
-                    'action' => 'get-balance',
+                $response = Http::asForm()->post('https://api.smsonlinegh.com/v4/reports/balance', [
                     'key' => $apiKey,
                 ]);
             }
 
+            $status = $response->status();
             $rawBody = trim($response->body());
             $jsonData = $response->json();
 
-            // 1. Plain numeric balance response (e.g. "150.50")
-            if (is_numeric($rawBody)) {
-                return [
-                    'success' => true,
-                    'credit' => $rawBody,
-                    'message' => "Current SMS Credit Balance: {$rawBody} Credits",
-                ];
-            }
-
-            // 2. Structured JSON response
+            $credit = null;
             if (is_array($jsonData)) {
                 $code = $jsonData['handshake']['code'] ?? null;
                 if ($code !== null && (int) $code !== 1000) {
@@ -148,40 +139,31 @@ class SmsOnlineGhService
                     ];
                 }
 
-                $credit = null;
-                if (isset($jsonData['data']['credit'])) {
-                    $credit = $jsonData['data']['credit'];
-                } elseif (isset($jsonData['data']['balance'])) {
-                    $credit = $jsonData['data']['balance'];
-                } elseif (isset($jsonData['credit'])) {
-                    $credit = $jsonData['credit'];
-                } elseif (isset($jsonData['balance'])) {
-                    $credit = $jsonData['balance'];
-                } elseif (isset($jsonData['data']) && (is_numeric($jsonData['data']) || is_string($jsonData['data']))) {
-                    $credit = $jsonData['data'];
-                }
+                $credit = $jsonData['data']['credit']
+                    ?? $jsonData['data']['balance']
+                    ?? $jsonData['credit']
+                    ?? $jsonData['balance']
+                    ?? $jsonData['data']
+                    ?? null;
 
-                if ($credit !== null) {
-                    return [
-                        'success' => true,
-                        'credit' => $credit,
-                        'message' => "Current SMS Credit Balance: {$credit} Credits",
-                    ];
+                if (is_array($credit)) {
+                    $credit = json_encode($credit);
                 }
+            } elseif (is_numeric($rawBody)) {
+                $credit = $rawBody;
             }
 
-            // 3. Fallback raw body string
-            if (! empty($rawBody)) {
+            if ($credit !== null && $credit !== '') {
                 return [
                     'success' => true,
-                    'credit' => $rawBody,
-                    'message' => "Current SMS Credit Balance: {$rawBody}",
+                    'credit' => $credit,
+                    'message' => "Current SMS Credit Balance: {$credit}",
                 ];
             }
 
             return [
-                'success' => false,
-                'message' => "Unable to parse balance from SMSOnlineGH response.",
+                'success' => true,
+                'message' => "HTTP {$status} Response: " . ($rawBody !== '' ? $rawBody : '(Empty Response)'),
             ];
         } catch (\Throwable $e) {
             return [
