@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\DeliveryAreaController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductReviewController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\StoreSettingController;
 use App\Http\Controllers\Api\UserAddressController;
@@ -21,6 +22,8 @@ Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
 // Public Catalog & Store routes
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
+Route::get('/products/{product}/reviews', [ProductReviewController::class, 'index']);
+Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/add-ons', [AddOnController::class, 'index']);
 Route::get('/delivery-areas', [DeliveryAreaController::class, 'index']);

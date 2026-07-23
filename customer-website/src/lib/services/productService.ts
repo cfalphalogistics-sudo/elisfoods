@@ -209,3 +209,68 @@ export async function fetchAddOns(): Promise<AddOn[]> {
     return staticAddOns;
   }
 }
+
+export interface ReviewItem {
+  id: number;
+  customer_name: string;
+  rating: number;
+  comment: string | null;
+  is_verified_purchase: boolean;
+  created_at: string;
+}
+
+export interface ProductReviewsData {
+  average_rating: number;
+  total_reviews: number;
+  rating_breakdown: Record<number, number>;
+  reviews: ReviewItem[];
+}
+
+export async function fetchProductReviews(productParam: string): Promise<ProductReviewsData> {
+  try {
+    const res = await fetch(`${API_BASE}/api/products/${productParam}/reviews`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error("Failed to fetch product reviews");
+    const data = await res.json();
+    return {
+      average_rating: data.average_rating ?? 5.0,
+      total_reviews: data.total_reviews ?? 0,
+      rating_breakdown: data.rating_breakdown ?? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      reviews: data.reviews ?? [],
+    };
+  } catch {
+    return {
+      average_rating: 5.0,
+      total_reviews: 0,
+      rating_breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      reviews: [],
+    };
+  }
+}
+
+export async function submitProductReview(
+  productParam: string,
+  payload: { rating: number; comment?: string; customer_name?: string; order_reference?: string },
+  token?: string | null
+): Promise<{ success: boolean; message: string; review: ReviewItem; new_product_rating: number }> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}/api/products/${productParam}/reviews`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to submit rating.");
+  }
+  return data;
+}

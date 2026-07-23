@@ -39,6 +39,26 @@ class Product extends Model
         return $this->hasMany(Variation::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class)->where('status', 'approved');
+    }
+
+    public function recalculateRating(): float
+    {
+        $avg = $this->approvedReviews()->avg('rating');
+        $rating = $avg ? round($avg, 1) : 5.0;
+
+        $this->update(['rating' => $rating]);
+
+        return $rating;
+    }
+
     public function scopeActive($query)
     {
         return $query->where('available', true);
