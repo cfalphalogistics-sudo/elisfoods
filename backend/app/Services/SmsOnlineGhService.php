@@ -39,7 +39,7 @@ class SmsOnlineGhService
             try {
                 return Crypt::decryptString($rawKey);
             } catch (\Throwable) {
-                // Return raw key if not encrypted (backwards compatibility)
+                // Return raw key if not encrypted
                 return $rawKey;
             }
         }
@@ -120,7 +120,17 @@ class SmsOnlineGhService
 
             if ($response->successful()) {
                 $data = $response->json();
-                $credit = $data['credit'] ?? $data['balance'] ?? $data['response'] ?? null;
+                $code = $data['handshake']['code'] ?? null;
+
+                if ($code !== null && (int) $code !== 1000) {
+                    $desc = $data['handshake']['description'] ?? 'API authentication error';
+                    return [
+                        'success' => false,
+                        'message' => "SMSOnlineGH Error (Code {$code}): {$desc}",
+                    ];
+                }
+
+                $credit = $data['credit'] ?? $data['balance'] ?? $data['data']['credit'] ?? null;
 
                 if ($credit !== null) {
                     return [
@@ -133,7 +143,7 @@ class SmsOnlineGhService
                 return [
                     'success' => true,
                     'raw' => $response->body(),
-                    'message' => "API Response: {$response->body()}",
+                    'message' => "API Connection Successful: {$response->body()}",
                 ];
             }
 
@@ -169,21 +179,56 @@ class SmsOnlineGhService
             return true;
         }
 
+        return $this->sendSmsWithSender($formattedPhone, $message, $apiKey, $senderId);
+    }
+
+    /**
+     * Dispatch HTTP request to SMSOnlineGH API v4.
+     */
+    protected function sendSmsWithSender(string $formattedPhone, string $message, string $apiKey, string $senderId): bool
+    {
         try {
-            $response = Http::acceptJson()->post('https://api.smsonlinegh.com/v4/message/send', [
+            // SMSOnlineGH accepts form parameters or query params
+            $response = Http::acceptJson()->asForm()->post('https://api.smsonlinegh.com/v4/message/send', [
                 'key' => $apiKey,
                 'to' => $formattedPhone,
                 'msg' => $message,
                 'sender' => $senderId,
             ]);
 
+            if (! $response->successful()) {
+                // Try GET request as fallback
+                $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v4/message/send', [
+                    'key' => $apiKey,
+                    'to' => $formattedPhone,
+                    'msg' => $message,
+                    'sender' => $senderId,
+                ]);
+            }
+
             if ($response->successful()) {
-                Log::info("SMSOnlineGH Sent to {$formattedPhone}: {$response->body()}");
+                $data = $response->json();
+                $code = $data['handshake']['code'] ?? null;
+
+                if ($code !== null && (int) $code !== 1000) {
+                    $description = $data['handshake']['description'] ?? 'SMS dispatch error';
+                    Log::error("SMSOnlineGH API Handshake Error (Code {$code}): {$description} | Sender ID: {$senderId} | To: {$formattedPhone}");
+
+                    // If custom Sender ID failed (Code 1003 = Sender ID Not Approved), retry with default 'ELIS FOODS'
+                    if ((int) $code === 1003 && $senderId !== 'ELIS FOODS') {
+                        Log::info("SMSOnlineGH Retrying dispatch with default Sender ID 'ELIS FOODS'...");
+                        return $this->sendSmsWithSender($formattedPhone, $message, $apiKey, 'ELIS FOODS');
+                    }
+
+                    return false;
+                }
+
+                Log::info("SMSOnlineGH Sent successfully to {$formattedPhone}: {$response->body()}");
                 $this->incrementDailySentCount();
                 return true;
             }
 
-            Log::error("SMSOnlineGH Failed for {$formattedPhone}: Status {$response->status()} - {$response->body()}");
+            Log::error("SMSOnlineGH HTTP Failed for {$formattedPhone}: Status {$response->status()} - {$response->body()}");
             return false;
         } catch (\Throwable $e) {
             Log::error("SMSOnlineGH Exception for {$formattedPhone}: {$e->getMessage()}");

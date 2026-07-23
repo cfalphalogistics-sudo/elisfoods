@@ -43,7 +43,7 @@ class ManageStoreSettings extends Page
 
     protected function fillForm(): void
     {
-        $apiKey = SmsOnlineGhService::getApiKey();
+        $hasKey = ! empty(SmsOnlineGhService::getApiKey());
 
         $this->form->fill([
             'phone' => StoreSetting::get('phone', ''),
@@ -58,7 +58,7 @@ class ManageStoreSettings extends Page
             'is_open' => filter_var(StoreSetting::get('is_open', 'true'), FILTER_VALIDATE_BOOLEAN),
             'payment_methods' => json_decode(StoreSetting::get('payment_methods', '[]'), true) ?: ['hubtel', 'cash', 'whatsapp'],
             'pickup_location' => StoreSetting::get('pickup_location', "Eli's Food Kitchen, Accra"),
-            'sms_api_key' => $apiKey ?: '',
+            'sms_api_key' => '', // Leave blank on load so it is not exposed or wiped on save
             'sms_sender_id' => StoreSetting::get('sms_sender_id', 'ELIS FOODS'),
             'sms_daily_limit' => (int) StoreSetting::get('sms_daily_limit', 100),
         ]);
@@ -66,6 +66,8 @@ class ManageStoreSettings extends Page
 
     public function form(Schema $schema): Schema
     {
+        $hasStoredKey = ! empty(SmsOnlineGhService::getApiKey());
+
         return $schema
             ->statePath('data')
             ->components([
@@ -91,8 +93,8 @@ class ManageStoreSettings extends Page
                             ->label('SMSOnlineGH API Key')
                             ->password()
                             ->revealable()
-                            ->placeholder('Enter your SMSOnlineGH API key')
-                            ->helperText('Stored securely with AES-256 encryption.'),
+                            ->placeholder($hasStoredKey ? '●●●●●●●●●●●● (API Key Saved)' : 'Enter your SMSOnlineGH API key')
+                            ->helperText($hasStoredKey ? 'API key is configured. Leave blank to keep existing key.' : 'Stored securely with AES-256 encryption.'),
                         \Filament\Forms\Components\TextInput::make('sms_sender_id')
                             ->label('SMS Sender ID')
                             ->placeholder('ELIS FOODS')
@@ -185,7 +187,7 @@ class ManageStoreSettings extends Page
         } else {
             Notification::make()
                 ->warning()
-                ->title('SMS Balance Check Failed')
+                ->title('SMS Connection / Balance Test')
                 ->body($result['message'])
                 ->send();
         }
@@ -197,12 +199,13 @@ class ManageStoreSettings extends Page
 
         foreach ($data as $key => $value) {
             if ($key === 'sms_api_key') {
-                if (! empty($value)) {
-                    // Encrypt API Key before storing in database
-                    $value = Crypt::encryptString($value);
-                } else {
-                    $value = '';
+                $trimmedKey = trim((string) $value);
+                if (! empty($trimmedKey)) {
+                    // Store new encrypted API key
+                    StoreSetting::set('sms_api_key', Crypt::encryptString($trimmedKey));
                 }
+                // If blank, keep existing key in database
+                continue;
             } elseif (is_array($value)) {
                 $value = json_encode($value);
             } elseif (is_bool($value)) {
