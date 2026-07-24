@@ -101,6 +101,12 @@ class SmsOnlineGhService
 
     /**
      * Check SMSOnlineGH balance live from API.
+     *
+     * Uses the v5 API (see https://dev.smsonlinegh.com/docs/v5/http/url/reporting/balance.html).
+     * The account was previously integrated against v4 endpoints
+     * (api.smsonlinegh.com/v4/...), which no longer exist — every v4 path,
+     * including nonsense ones, now returns HTTP 200 with an empty body. That
+     * silently broke both balance checks and SMS dispatch.
      */
     public function getBalance(): array
     {
@@ -114,56 +120,37 @@ class SmsOnlineGhService
         }
 
         try {
-            $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v4/reports/balance', [
+            $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v5/report/balance', [
                 'key' => $apiKey,
             ]);
 
-            if (! $response->successful()) {
-                $response = Http::asForm()->post('https://api.smsonlinegh.com/v4/reports/balance', [
-                    'key' => $apiKey,
-                ]);
-            }
-
             $status = $response->status();
-            $rawBody = trim($response->body());
-            $jsonData = $response->json();
+            $data = $response->json();
 
-            $credit = null;
-            if (is_array($jsonData)) {
-                $code = $jsonData['handshake']['code'] ?? null;
-                if ($code !== null && (int) $code !== 1000) {
-                    $desc = $jsonData['handshake']['description'] ?? 'API authentication error';
-                    return [
-                        'success' => false,
-                        'message' => "SMSOnlineGH Error (Code {$code}): {$desc}",
-                    ];
-                }
-
-                $credit = $jsonData['data']['credit']
-                    ?? $jsonData['data']['balance']
-                    ?? $jsonData['credit']
-                    ?? $jsonData['balance']
-                    ?? $jsonData['data']
-                    ?? null;
-
-                if (is_array($credit)) {
-                    $credit = json_encode($credit);
-                }
-            } elseif (is_numeric($rawBody)) {
-                $credit = $rawBody;
-            }
-
-            if ($credit !== null && $credit !== '') {
+            if (! is_array($data)) {
                 return [
-                    'success' => true,
-                    'credit' => $credit,
-                    'message' => "Current SMS Credit Balance: {$credit}",
+                    'success' => false,
+                    'message' => "SMSOnlineGH returned HTTP {$status} with an unreadable body: " . trim($response->body()) ?: '(empty)',
                 ];
             }
 
+            $handshakeId = $data['handshake']['id'] ?? null;
+            $handshakeLabel = $data['handshake']['label'] ?? 'Unknown error';
+
+            if ($handshakeId !== 0) {
+                return [
+                    'success' => false,
+                    'message' => "SMSOnlineGH Error ({$handshakeLabel}, id {$handshakeId})",
+                ];
+            }
+
+            $balance = $data['data']['balance'] ?? null;
+            $model = $data['data']['model'] ?? 'quantity';
+
             return [
                 'success' => true,
-                'message' => "HTTP {$status} Response: " . ($rawBody !== '' ? $rawBody : '(Empty Response)'),
+                'credit' => $balance,
+                'message' => "Current SMS Credit Balance: {$balance} ({$model})",
             ];
         } catch (\Throwable $e) {
             return [
@@ -174,7 +161,7 @@ class SmsOnlineGhService
     }
 
     /**
-     * Send SMS using SMSOnlineGH API v4.
+     * Send SMS using the SMSOnlineGH v5 API.
      */
     public function sendSms(string $phone, string $message): bool
     {
@@ -197,53 +184,41 @@ class SmsOnlineGhService
     }
 
     /**
-     * Dispatch HTTP request to SMSOnlineGH API v4.
+     * Dispatch HTTP request to the SMSOnlineGH v5 API.
+     *
+     * See https://dev.smsonlinegh.com/docs/v5/http/url/sms/non_psnd.html.
+     * `type` is required by the API; 0 is their documented example value for
+     * a standard GSM text message.
      */
     protected function sendSmsWithSender(string $formattedPhone, string $message, string $apiKey, string $senderId): bool
     {
         try {
-            // SMSOnlineGH accepts form parameters or query params
-            $response = Http::acceptJson()->asForm()->post('https://api.smsonlinegh.com/v4/message/send', [
+            $response = Http::acceptJson()->asForm()->post('https://api.smsonlinegh.com/v5/message/sms/send', [
                 'key' => $apiKey,
-                'to' => $formattedPhone,
-                'msg' => $message,
+                'text' => $message,
+                'type' => 0,
                 'sender' => $senderId,
+                'to' => $formattedPhone,
             ]);
 
-            if (! $response->successful()) {
-                // Try GET request as fallback
-                $response = Http::acceptJson()->get('https://api.smsonlinegh.com/v4/message/send', [
-                    'key' => $apiKey,
-                    'to' => $formattedPhone,
-                    'msg' => $message,
-                    'sender' => $senderId,
-                ]);
+            $data = $response->json();
+
+            if (! is_array($data)) {
+                Log::error("SMSOnlineGH returned HTTP {$response->status()} with an unreadable body — treating as failed dispatch | Sender ID: {$senderId} | To: {$formattedPhone} | Raw body: " . $response->body());
+                return false;
             }
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $code = $data['handshake']['code'] ?? null;
+            $handshakeId = $data['handshake']['id'] ?? null;
+            $handshakeLabel = $data['handshake']['label'] ?? 'Unknown error';
 
-                if ($code !== null && (int) $code !== 1000) {
-                    $description = $data['handshake']['description'] ?? 'SMS dispatch error';
-                    Log::error("SMSOnlineGH API Handshake Error (Code {$code}): {$description} | Sender ID: {$senderId} | To: {$formattedPhone}");
-
-                    // If custom Sender ID failed (Code 1003 = Sender ID Not Approved), retry with default 'ELIS FOODS'
-                    if ((int) $code === 1003 && $senderId !== 'ELIS FOODS') {
-                        Log::info("SMSOnlineGH Retrying dispatch with default Sender ID 'ELIS FOODS'...");
-                        return $this->sendSmsWithSender($formattedPhone, $message, $apiKey, 'ELIS FOODS');
-                    }
-
-                    return false;
-                }
-
-                Log::info("SMSOnlineGH Sent successfully to {$formattedPhone}: {$response->body()}");
-                $this->incrementDailySentCount();
-                return true;
+            if ($handshakeId !== 0) {
+                Log::error("SMSOnlineGH API Error ({$handshakeLabel}, id {$handshakeId}) | Sender ID: {$senderId} | To: {$formattedPhone}");
+                return false;
             }
 
-            Log::error("SMSOnlineGH HTTP Failed for {$formattedPhone}: Status {$response->status()} - {$response->body()}");
-            return false;
+            Log::info("SMSOnlineGH Sent successfully to {$formattedPhone}: {$response->body()}");
+            $this->incrementDailySentCount();
+            return true;
         } catch (\Throwable $e) {
             Log::error("SMSOnlineGH Exception for {$formattedPhone}: {$e->getMessage()}");
             return false;
