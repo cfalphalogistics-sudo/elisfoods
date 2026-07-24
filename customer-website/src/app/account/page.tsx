@@ -53,7 +53,6 @@ export default function AccountPage() {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [authLoading, setAuthLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  const [debugOtp, setDebugOtp] = useState<string | null>(null);
 
   // Orders State
   const [orders, setOrders] = useState<BackendOrder[]>([]);
@@ -105,15 +104,10 @@ export default function AccountPage() {
     }
     setAuthLoading(true);
     try {
-      const result = await requestOtp(phone);
+      await requestOtp(phone);
       setStep("otp");
       setResendTimer(45);
-      if (result.debug_code) {
-        setDebugOtp(result.debug_code);
-        showToast(`Verification code sent! (Debug Code: ${result.debug_code})`, "info");
-      } else {
-        showToast("Verification code sent to your phone via SMS", "success");
-      }
+      showToast("Verification code sent to your phone via SMS", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to send verification code";
       showToast(msg, "error");
@@ -313,12 +307,6 @@ export default function AccountPage() {
                 autoFocus
               />
             </div>
-
-            {debugOtp && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center">
-                <p className="text-xs text-amber-700 font-medium">Testing Mode OTP: <span className="font-bold tracking-wider">{debugOtp}</span></p>
-              </div>
-            )}
 
             <button
               type="submit"

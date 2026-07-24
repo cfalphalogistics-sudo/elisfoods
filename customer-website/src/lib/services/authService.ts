@@ -33,7 +33,7 @@ export interface UserProfile {
   favourites?: UserFavourite[];
 }
 
-export async function sendOtp(phone: string): Promise<{ success: boolean; message: string; debug_code?: string }> {
+export async function sendOtp(phone: string): Promise<{ success: boolean; message: string }> {
   const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

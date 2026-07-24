@@ -24,7 +24,7 @@ interface AuthContextType {
   isLoading: boolean;
   addresses: UserAddress[];
   favourites: UserFavourite[];
-  requestOtp: (phone: string) => Promise<{ debug_code?: string }>;
+  requestOtp: (phone: string) => Promise<void>;
   confirmOtp: (phone: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfileInfo: (name: string, email?: string) => Promise<void>;
@@ -73,8 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadUser]);
 
   const requestOtp = useCallback(async (phone: string) => {
-    const res = await sendOtp(phone);
-    return { debug_code: res.debug_code };
+    await sendOtp(phone);
   }, []);
 
   const confirmOtp = useCallback(async (phone: string, otp: string) => {

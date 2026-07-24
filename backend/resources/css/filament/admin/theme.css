@@ -8,6 +8,26 @@
    Warm charcoal + ember gradient system on top of Filament v5
    ========================================================= */
 
+/* ---------- Toast notification visibility failsafe ----------
+   Filament's toast notifications (Notification::make()->send()) rely on
+   Alpine's x-data="notificationComponent(...)" to flip an `isShown` flag
+   from false -> true right after init(), which drives the enter transition
+   via Alpine's built-in x-transition machinery. On this stack that flip
+   never completes — verified directly: the element is created with the
+   correct classes and the compiled CSS (display:flex/invisible base state)
+   is correct, but it stays permanently stuck at `fi-transition-enter-start`
+   with display:none/opacity:0, even for a notification appended and
+   Alpine.initTree()'d completely outside of Livewire's morph cycle, which
+   rules out a Livewire-morph timing race as the cause. Forcing visibility
+   here sacrifices the slide/fade-in animation but guarantees admins
+   actually see save/error confirmations instead of silent no-ops. */
+.fi-no-notification {
+    visibility: visible !important;
+    display: flex !important;
+    opacity: 1 !important;
+    translate: 0 0 !important;
+}
+
 :root {
     --ef-primary: #f97316;
     --ef-primary-soft: #fb923c;

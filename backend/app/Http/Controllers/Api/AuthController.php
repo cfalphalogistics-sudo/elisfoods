@@ -80,16 +80,19 @@ class AuthController extends Controller
         ]);
 
         $message = "Your Eli's Food verification code is {$code}. It is valid for 10 minutes. Do not share this code.";
-        $this->smsService->sendSms($formattedPhone, $message);
+        $sent = $this->smsService->sendSms($formattedPhone, $message);
 
-        $apiKey = SmsOnlineGhService::getApiKey();
+        if (! $sent) {
+            return response()->json([
+                'success' => false,
+                'message' => "We couldn't send your verification code right now. Please try again in a moment.",
+            ], 502);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Verification code sent successfully.',
             'phone' => $formattedPhone,
-            // Include OTP in debug mode or when API key is missing
-            'debug_code' => config('app.debug') || empty($apiKey) ? $code : null,
         ]);
     }
 
