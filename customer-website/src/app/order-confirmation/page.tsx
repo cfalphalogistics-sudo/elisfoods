@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart, type CartItem } from "@/contexts/CartContext";
 import { useOrders } from "@/contexts/OrderContext";
-import { formatPrice, storeSettings } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 interface OrderSummary {
   items: CartItem[];
@@ -17,6 +18,7 @@ function OrderConfirmationContent() {
   const method = searchParams.get("method") || "hubtel";
   const { total, customer, items, clearCart, deliveryFee, discount, subtotal, addOnsTotal, packagingFee, isHydrated } = useCart();
   const { addOrder } = useOrders();
+  const storeSettings = useStoreSettings();
   // The reference shown here must be the one the backend actually created —
   // the client-side placeholder is never accepted by the API, so displaying
   // it would show the customer a number that doesn't exist in the database
@@ -94,7 +96,16 @@ function OrderConfirmationContent() {
         if (method === "whatsapp") {
           const message = buildWhatsAppMessage(created.reference);
           const url = `https://wa.me/${storeSettings.whatsapp}?text=${encodeURIComponent(message)}`;
-          window.open(url, "_blank");
+          // window.open() here happens after an awaited network call, well
+          // outside the click handler that triggered this page — browsers
+          // treat that as untrusted and silently block the popup (confirmed:
+          // this was the actual cause of "orders don't arrive on WhatsApp").
+          // A top-level redirect is never blocked, so fall back to it
+          // whenever the popup doesn't open.
+          const popup = window.open(url, "_blank");
+          if (!popup || popup.closed || typeof popup.closed === "undefined") {
+            window.location.href = url;
+          }
         }
         clearCart();
       } catch {
